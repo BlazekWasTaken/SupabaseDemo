@@ -29,7 +29,7 @@ class SupabaseAuthViewModel : ViewModel() {
                     data = buildJsonObject {
                         put("email", userEmail)
                         put("username", username)
-                        put("MAC", macAddress)
+                        put("mac", macAddress)
                     }
                 }
                 saveToken(context)
