@@ -57,6 +57,8 @@ class MainActivity : ComponentActivity() {
 
         var userEmail by remember { mutableStateOf("") }
         var userPassword by remember { mutableStateOf("") }
+        var username by remember { mutableStateOf("") }
+        var macAddress by remember { mutableStateOf("") }
 
         var currentUserState by remember { mutableStateOf("") }
 
@@ -83,6 +85,25 @@ class MainActivity : ComponentActivity() {
                 })
             Spacer(modifier = Modifier.padding(8.dp))
             TextField(
+                value = username,
+                placeholder = {
+                    Text(text = "Enter username")
+                },
+                onValueChange = {
+                    username = it
+                })
+            Spacer(modifier = Modifier.padding(8.dp))
+            TextField(
+                value = macAddress,
+                placeholder = {
+                    Text(text = "mac address (will remove tomorrow)")
+                },
+                onValueChange = {
+                    macAddress = it
+                }
+            )
+            Spacer(modifier = Modifier.padding(8.dp))
+            TextField(
                 value = userPassword,
                 placeholder = {
                     Text(text = "Enter password")
@@ -99,8 +120,8 @@ class MainActivity : ComponentActivity() {
                     context,
                     userEmail,
                     userPassword,
-                    "aaa",
-                    "bbb"
+                    username,
+                    macAddress
                 )
             }) {
                 Text(text = "Sign Up")
