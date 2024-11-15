@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -56,12 +57,15 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(platform(libs.bom))
     implementation(libs.auth.kt)
     implementation(libs.realtime.kt)
 
     implementation(libs.ktor.client.okhttp)
+
 
     //noinspection UseTomlInstead
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")

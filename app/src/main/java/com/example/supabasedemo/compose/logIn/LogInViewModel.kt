@@ -1,11 +1,10 @@
-package com.example.supabasedemo
+package com.example.supabasedemo.compose.logIn
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
-import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.data.network.SupabaseClient.client
 import com.example.supabasedemo.utils.SharedPreferenceHelper
 import io.github.jan.supabase.auth.auth
@@ -15,27 +14,26 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-class SupabaseAuthViewModel : ViewModel() {
-    private val _userState = mutableStateOf<UserState>(UserState.Loading)
-    val userState: State<UserState> = _userState
+class LogInViewModel : ViewModel() {
+    private val _userState = mutableStateOf<LogInUserState>(LogInUserState.Loading)
+    val userState: State<LogInUserState> = _userState
 
-    fun signUp(context: Context, userEmail: String, userPassword: String, username: String, macAddress: String) {
+    fun signUp(context: Context, userEmail: String, userPassword: String, username: String) {
         viewModelScope.launch {
             try {
-                _userState.value = UserState.Loading
+                _userState.value = LogInUserState.Loading
                 val result = client.auth.signUpWith(Email) {
                     email = userEmail
                     password = userPassword
                     data = buildJsonObject {
                         put("email", userEmail)
                         put("username", username)
-                        put("mac", macAddress)
                     }
                 }
                 saveToken(context)
-                _userState.value = UserState.Success("Registered successfully!")
+                _userState.value = LogInUserState.Success("Registered successfully!")
             } catch(e: Exception) {
-                _userState.value = UserState.Error(e.message ?: "")
+                _userState.value = LogInUserState.Error(e.message ?: "")
             }
         }
     }
@@ -56,15 +54,15 @@ class SupabaseAuthViewModel : ViewModel() {
     fun login(context: Context, userEmail: String, userPassword: String) {
         viewModelScope.launch {
             try {
-                _userState.value = UserState.Loading
+                _userState.value = LogInUserState.Loading
                 val result = client.auth.signInWith(Email) {
                     email = userEmail
                     password = userPassword
                 }
                 saveToken(context)
-                _userState.value = UserState.Success("Logged in successfully!")
+                _userState.value = LogInUserState.Success("Logged in successfully!")
             } catch (e: Exception) {
-                _userState.value = UserState.Error(e.message ?: "")
+                _userState.value = LogInUserState.Error(e.message ?: "")
             }
 
         }
@@ -74,12 +72,12 @@ class SupabaseAuthViewModel : ViewModel() {
         val sharedPref = SharedPreferenceHelper(context)
         viewModelScope.launch {
             try {
-                _userState.value = UserState.Loading
+                _userState.value = LogInUserState.Loading
                 client.auth.signOut()
                 sharedPref.clearPreferences()
-                _userState.value = UserState.Success("Logged out successfully!")
+                _userState.value = LogInUserState.Success("Logged out successfully!")
             } catch (e: Exception) {
-                _userState.value = UserState.Error(e.message ?: "")
+                _userState.value = LogInUserState.Error(e.message ?: "")
             }
         }
     }
@@ -87,18 +85,18 @@ class SupabaseAuthViewModel : ViewModel() {
     fun isUserLoggedIn(context: Context) {
         viewModelScope.launch {
             try {
-                _userState.value = UserState.Loading
+                _userState.value = LogInUserState.Loading
                 val token = getToken(context)
                 if(token.isNullOrEmpty()) {
-                    _userState.value = UserState.Success("User not logged in!")
+                    _userState.value = LogInUserState.Success("User not logged in!")
                 } else {
                     client.auth.retrieveUser(token)
                     client.auth.refreshCurrentSession()
                     saveToken(context)
-                    _userState.value = UserState.Success("User already logged in!")
+                    _userState.value = LogInUserState.Success("User already logged in!")
                 }
             } catch (e: RestException) {
-                _userState.value = UserState.Error(e.error)
+                _userState.value = LogInUserState.Error(e.error)
             }
         }
     }
@@ -107,5 +105,9 @@ class SupabaseAuthViewModel : ViewModel() {
         val user = client.auth.currentUserOrNull()
         val metadata = user?.userMetadata
         return metadata.toString()
+    }
+
+    fun moveOn() {
+        _userState.value = LogInUserState.MovedOn
     }
 }
