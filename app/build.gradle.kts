@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.supabasedemo"
-        minSdk = 35
+        minSdk = 33
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -65,5 +65,6 @@ dependencies {
 
     //noinspection UseTomlInstead
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("com.journeyapps:zxing-android-embedded:4.1.0")
 
 }
