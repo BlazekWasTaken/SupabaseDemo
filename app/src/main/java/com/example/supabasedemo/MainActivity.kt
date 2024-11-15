@@ -51,43 +51,6 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun LoggedInScreen(onCreateGameClick: () -> Unit) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Welcome to the Game!")
-            Spacer(modifier = Modifier.padding(8.dp))
-            Button(onClick = onCreateGameClick) {
-                Text("Create a Game")
-            }
-        }
-    }
-
-    @Composable
-    fun CreateGameScreen(onGameCreated: () -> Unit) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Create a New Game")
-            Spacer(modifier = Modifier.padding(8.dp))
-            Button(onClick = {
-                // Add your game creation logic here
-                onGameCreated()
-            }) {
-                Text("Generate QR Code")
-            }
-        }
-    }
-
-    @Composable
     fun MainScreen(viewModel: SupabaseAuthViewModel = viewModel()) {
         val context = LocalContext.current
         val userState by viewModel.userState
@@ -99,124 +62,108 @@ class MainActivity : ComponentActivity() {
 
         var currentUserState by remember { mutableStateOf("") }
 
-        var navigateToCreateGame by remember { mutableStateOf(false) }
-
         LaunchedEffect(Unit) {
             viewModel.isUserLoggedIn(
                 context,
             )
         }
 
-        if (navigateToCreateGame) {
-            CreateGameScreen(onGameCreated = {
-                navigateToCreateGame = false
-            })
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                TextField(
-                    value = userEmail,
-                    placeholder = {
-                        Text(text = "Enter email")
-                    },
-                    onValueChange = {
-                        userEmail = it
-                    })
-                Spacer(modifier = Modifier.padding(8.dp))
-                TextField(
-                    value = username,
-                    placeholder = {
-                        Text(text = "Enter username")
-                    },
-                    onValueChange = {
-                        username = it
-                    })
-                Spacer(modifier = Modifier.padding(8.dp))
-                TextField(
-                    value = macAddress,
-                    placeholder = {
-                        Text(text = "mac address (will remove tomorrow)")
-                    },
-                    onValueChange = {
-                        macAddress = it
-                    }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            TextField(
+                value = userEmail,
+                placeholder = {
+                    Text(text = "Enter email")
+                },
+                onValueChange = {
+                    userEmail = it
+                })
+            Spacer(modifier = Modifier.padding(8.dp))
+            TextField(
+                value = username,
+                placeholder = {
+                    Text(text = "Enter username")
+                },
+                onValueChange = {
+                    username = it
+                })
+            Spacer(modifier = Modifier.padding(8.dp))
+            TextField(
+                value = macAddress,
+                placeholder = {
+                    Text(text = "mac address (will remove tomorrow)")
+                },
+                onValueChange = {
+                    macAddress = it
+                }
+            )
+            Spacer(modifier = Modifier.padding(8.dp))
+            TextField(
+                value = userPassword,
+                placeholder = {
+                    Text(text = "Enter password")
+                },
+                onValueChange = {
+                    userPassword = it
+                },
+                visualTransformation =  PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            )
+            Spacer(modifier = Modifier.padding(8.dp))
+            Button(onClick = {
+                viewModel.signUp(
+                    context,
+                    userEmail,
+                    userPassword,
+                    username,
+                    macAddress
                 )
-                Spacer(modifier = Modifier.padding(8.dp))
-                TextField(
-                    value = userPassword,
-                    placeholder = {
-                        Text(text = "Enter password")
-                    },
-                    onValueChange = {
-                        userPassword = it
-                    },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            }) {
+                Text(text = "Sign Up")
+            }
+
+            Button(onClick = {
+                viewModel.login(
+                    context,
+                    userEmail,
+                    userPassword,
                 )
-                Spacer(modifier = Modifier.padding(8.dp))
-                Button(onClick = {
-                    viewModel.signUp(
-                        context,
-                        userEmail,
-                        userPassword,
-                        username,
-                        macAddress
-                    )
+            }) {
+                Text(text = "Login")
+            }
+
+            Button(
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                onClick = {
+                    viewModel.logout(context)
                 }) {
-                    Text(text = "Sign Up")
+                Text(text = "Logout")
+            }
+
+            when (userState) {
+                is UserState.Loading -> {
+                    LoadingComponent()
                 }
 
-                Button(onClick = {
-                    viewModel.login(
-                        context,
-                        userEmail,
-                        userPassword,
-                    )
-                }) {
-                    Text(text = "Login")
+                is UserState.Success -> {
+                    val message = (userState as UserState.Success).message
+                    currentUserState = message
                 }
 
-                Button(
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                    onClick = {
-                        viewModel.logout(context)
-                    }) {
-                    Text(text = "Logout")
-                }
-
-                when (userState) {
-                    is UserState.Loading -> {
-                        LoadingComponent()
-                    }
-
-                    is UserState.Success -> {
-                        val message = (userState as UserState.Success).message
-                        currentUserState = message
-                    }
-
-                    is UserState.LoggedIn -> {
-                        LoggedInScreen(onCreateGameClick = {
-                            navigateToCreateGame = true
-                        })
-                    }
-
-                    is UserState.Error -> {
-                        val message = (userState as UserState.Error).message
-                        currentUserState = message
-                    }
-                }
-
-                if (currentUserState.isNotEmpty()) {
-                    Text(text = currentUserState)
+                is UserState.Error -> {
+                    val message = (userState as UserState.Error).message
+                    currentUserState = message
                 }
             }
 
-
+            if (currentUserState.isNotEmpty()) {
+                Text(text = currentUserState)
+            }
         }
     }
 }
