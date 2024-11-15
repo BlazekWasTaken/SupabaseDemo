@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.supabasedemo"
-        minSdk = 33
+        minSdk = 34
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -65,6 +65,13 @@ dependencies {
 
     //noinspection UseTomlInstead
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-    implementation("com.journeyapps:zxing-android-embedded:4.1.0")
-
+    implementation(libs.zxing.android.embedded)
+    implementation(libs.barcode.scanning)
+    implementation (libs.androidx.camera.camera2)
+    implementation (libs.androidx.camera.lifecycle)
+    implementation (libs.androidx.camera.view)
+    implementation (libs.barcode.scanning.v1703)
+    implementation (libs.barcode.scanning.v1702)
+    implementation (libs.androidx.camera.core)
+    implementation (libs.androidx.camera.mlkit.vision)
 }
