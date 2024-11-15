@@ -62,7 +62,7 @@ class SupabaseAuthViewModel : ViewModel() {
                     password = userPassword
                 }
                 saveToken(context)
-                _userState.value = UserState.Success("Logged in successfully!")
+                _userState.value = UserState.LoggedIn("Logged in successfully!")
             } catch (e: Exception) {
                 _userState.value = UserState.Error(e.message ?: "")
             }
@@ -95,7 +95,7 @@ class SupabaseAuthViewModel : ViewModel() {
                     client.auth.retrieveUser(token)
                     client.auth.refreshCurrentSession()
                     saveToken(context)
-                    _userState.value = UserState.Success("User already logged in!")
+                    _userState.value = UserState.LoggedIn("User already logged in!")
                 }
             } catch (e: RestException) {
                 _userState.value = UserState.Error(e.error)
