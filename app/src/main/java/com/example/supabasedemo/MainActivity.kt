@@ -1,14 +1,25 @@
 package com.example.supabasedemo
 
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.OptIn
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -25,16 +36,35 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import android.Manifest
+import android.app.Activity
 
+import androidx.camera.view.PreviewView
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.SupabaseDemoTheme
+import com.google.mlkit.vision.barcode.BarcodeScanner
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.WriterException
+import com.google.zxing.qrcode.QRCodeWriter
+import java.util.concurrent.Executors
+
 
 class MainActivity : ComponentActivity() {
+    private val CAMERA_PERMISSION_REQUEST_CODE = 101
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -47,6 +77,18 @@ class MainActivity : ComponentActivity() {
                     MainScreen()
                 }
             }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.CAMERA),
+                CAMERA_PERMISSION_REQUEST_CODE
+            )
         }
     }
 
@@ -67,8 +109,142 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun generateQRCode(text: String): Bitmap? {
+        val writer = QRCodeWriter()
+        return try {
+            Log.d("QRCode", "Attempting to encode QR code for text: $text")
+
+            val bitMatrix = writer.encode(text, BarcodeFormat.QR_CODE, 512, 512)
+            val width = bitMatrix.width
+            val height = bitMatrix.height
+
+            Log.d("QRCode", "QR code BitMatrix created with dimensions: $width x $height")
+
+            val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+            for (x in 0 until width) {
+                for (y in 0 until height) {
+                    bmp.setPixel(x, y, if (bitMatrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+                }
+            }
+            Log.d("QRCode", "QR code Bitmap successfully generated")
+
+            bmp
+        } catch (e: WriterException) {
+            Log.e("QRCode", "Failed to generate QR code: ${e.message}")
+            e.printStackTrace()
+            null
+        } catch (e: Exception) {
+            Log.e("QRCode", "Unexpected error: ${e.message}")
+            e.printStackTrace()
+            null
+        }
+    }
+
+    @Composable
+    fun QRCodeScanner(
+        onScanSuccess: (String) -> Unit,
+        onScanError: () -> Unit,
+        modifier: Modifier = Modifier
+    ) {
+        val context = LocalContext.current
+        val lifecycleOwner = LocalLifecycleOwner.current
+        val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+        val scanner = BarcodeScanning.getClient()
+
+        val permissionGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!permissionGranted) {
+            LaunchedEffect(context) {
+                ActivityCompat.requestPermissions(
+                    context as Activity,
+                    arrayOf(Manifest.permission.CAMERA),
+                    CAMERA_PERMISSION_REQUEST_CODE
+                )
+            }
+        } else {
+            AndroidView(
+                modifier = modifier.fillMaxSize(),
+                factory = { ctx ->
+                    val previewView = PreviewView(ctx)
+                    val cameraExecutor = Executors.newSingleThreadExecutor()
+
+                    cameraProviderFuture.addListener({
+                        val cameraProvider = cameraProviderFuture.get()
+
+                        val preview = androidx.camera.core.Preview.Builder()
+                            .build()
+                            .apply {
+                                surfaceProvider = previewView.surfaceProvider
+                            }
+
+                        val imageAnalysis = ImageAnalysis.Builder()
+                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                            .build()
+
+                        imageAnalysis.setAnalyzer(cameraExecutor, { imageProxy ->
+                            processImageProxy(scanner, imageProxy, onScanSuccess, onScanError)
+                        })
+
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                        try {
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                cameraSelector,
+                                preview,
+                                imageAnalysis
+                            )
+                        } catch (e: Exception) {
+                            Log.e("QRCodeScanner", "Camera binding failed: ${e.message}")
+                        }
+                    }, ContextCompat.getMainExecutor(ctx))
+
+                    previewView
+                }
+            )
+        }
+    }
+
+    @OptIn(ExperimentalGetImage::class)
+    public fun processImageProxy(
+        scanner: BarcodeScanner,
+        imageProxy: ImageProxy,
+        onScanSuccess: (String) -> Unit,
+        onScanError: () -> Unit
+    ) {
+        val mediaImage = imageProxy.image
+        if (mediaImage != null) {
+            val inputImage = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+            scanner.process(inputImage as InputImage)
+                .addOnSuccessListener { barcodes ->
+                    for (barcode in barcodes) {
+                        barcode.rawValue?.let { qrCode ->
+                            onScanSuccess(qrCode)
+                        }
+                    }
+                }
+                .addOnFailureListener {
+                    Log.e("QRCodeScanner", "QR code scanning failed: ${it.message}")
+                    onScanError()
+                }
+                .addOnCompleteListener {
+                    imageProxy.close()
+                }
+        } else {
+            imageProxy.close()
+        }
+    }
+
     @Composable
     fun CreateGameScreen(onGameCreated: () -> Unit) {
+        var qrCodeBitmap by remember { mutableStateOf<Bitmap?>(null) }
+        var showScanner by remember { mutableStateOf(false) }
+        var scannedQRCode by remember { mutableStateOf<String?>(null) }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -76,12 +252,49 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Create a New Game")
-            Spacer(modifier = Modifier.padding(8.dp))
+
             Button(onClick = {
-                onGameCreated()
+                val gameData = "Game Data"
+                try {
+                    qrCodeBitmap = generateQRCode(gameData) ?: throw Exception("Bitmap generation returned null")
+                } catch (e: Exception) {
+                    Log.e("QRCode", "Error generating QR code: ${e.message}")
+                }
             }) {
                 Text("Generate QR Code")
+            }
+            Spacer(modifier = Modifier.padding(16.dp))
+
+            qrCodeBitmap?.let { bitmap ->
+                Image(
+                    painter = BitmapPainter(bitmap.asImageBitmap()),
+                    contentDescription = "QR Code",
+                    modifier = Modifier.size(200.dp)
+                )
+            } ?: Text("Click the button to generate a QR code.")
+
+            Spacer(modifier = Modifier.padding(16.dp))
+
+            Button(onClick = {
+                showScanner = true
+            }) {
+                Text("Join Game")
+            }
+
+            if (showScanner) {
+                QRCodeScanner(onScanSuccess = { qrCode ->
+                    showScanner = false
+                    scannedQRCode = qrCode
+                }, onScanError = {
+                    showScanner = false
+                    Log.e("QRCode", "Error scanning QR code")
+                }, modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            scannedQRCode?.let {
+                Spacer(modifier = Modifier.padding(16.dp))
+                Text("Scanned QR Code: $it")
             }
         }
     }
