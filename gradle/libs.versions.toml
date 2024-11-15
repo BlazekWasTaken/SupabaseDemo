@@ -1,5 +1,9 @@
 [versions]
 agp = "8.7.2"
+barcodeScanning = "17.3.0"
+barcodeScanningVersion = "17.0.3"
+cameraCamera2 = "1.4.0"
+googleBarcodeScanning = "17.0.2"
 kotlin = "2.0.0"
 coreKtx = "1.15.0"
 lifecycleRuntimeKtx = "2.8.7"
@@ -10,8 +14,14 @@ serialization = "1.7.3"
 
 ktorClientOkhttp = "3.0.0"
 bom = "3.0.1"
+zxingAndroidEmbedded = "4.1.0"
 
 [libraries]
+androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCamera2" }
+androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "cameraCamera2" }
+androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "cameraCamera2" }
+androidx-camera-mlkit-vision = { module = "androidx.camera:camera-mlkit-vision", version.ref = "cameraCamera2" }
+androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "cameraCamera2" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
@@ -24,9 +34,13 @@ navigation-compose = { module = "androidx.navigation:navigation-compose", versio
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization"}
 
 auth-kt = { module = "io.github.jan-tennert.supabase:auth-kt" }
+barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
+barcode-scanning-v1702 = { module = "com.google.mlkit:barcode-scanning", version.ref = "googleBarcodeScanning" }
+barcode-scanning-v1703 = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanningVersion" }
 bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bom" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktorClientOkhttp" }
 realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt" }
+zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
