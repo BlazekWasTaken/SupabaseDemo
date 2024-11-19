@@ -41,14 +41,11 @@ import androidx.compose.ui.unit.dp
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.supabasedemo.data.model.UserState
-import com.example.supabasedemo.ui.theme.AppColors
-import com.example.supabasedemo.ui.theme.AppSizes
 import com.example.supabasedemo.ui.theme.AppTheme
-import com.example.supabasedemo.ui.theme.AppTypography
 import com.example.supabasedemo.ui.theme.Black
-import com.example.supabasedemo.ui.theme.DarkblueButton
-import com.example.supabasedemo.ui.theme.GreyblueButton
-import com.example.supabasedemo.ui.theme.LightblueButton
+import com.example.supabasedemo.ui.theme.DarkBlue
+import com.example.supabasedemo.ui.theme.GreyBlue
+import com.example.supabasedemo.ui.theme.LightBlue
 import com.example.supabasedemo.ui.theme.SupabaseDemoTheme
 import com.example.supabasedemo.ui.theme.Typography
 
@@ -60,7 +57,6 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = AppTheme.colorScheme.backgroundB
                 ) {
                     MainScreen()
                 }
@@ -94,13 +90,9 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             OutlinedTextField(
-                colors = TextFieldDefaults.colors(focusedLabelColor = GreyblueButton),
-                shape = RectangleShape,
                 value = userEmail,
-                textStyle = Typography.bodyLarge,
                 placeholder = {
                     Text(
-                        style = Typography.bodyLarge,
                         text = "Enter email")
                 },
                 onValueChange = {
@@ -108,13 +100,9 @@ class MainActivity : ComponentActivity() {
                 })
             Spacer(modifier = Modifier.padding(8.dp))
             OutlinedTextField(
-                colors = TextFieldDefaults.colors(focusedLabelColor = GreyblueButton),
-                shape = RectangleShape,
                 value = username,
-                textStyle = Typography.bodyLarge,
                 placeholder = {
                     Text(
-                        style = Typography.bodyLarge,
                         text = "Enter username")
                 },
                 onValueChange = {
@@ -122,28 +110,9 @@ class MainActivity : ComponentActivity() {
                 })
             Spacer(modifier = Modifier.padding(8.dp))
             OutlinedTextField(
-                colors = TextFieldDefaults.colors(focusedLabelColor = GreyblueButton),
-                shape = RectangleShape,
-                value = macAddress,
-                textStyle = Typography.bodyLarge,
-                placeholder = {
-                    Text(
-                        style = Typography.bodyLarge,
-                        text = "mac address (will remove tomorrow)")
-                },
-                onValueChange = {
-                    macAddress = it
-                }
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
-            OutlinedTextField(
-                colors = TextFieldDefaults.colors(focusedLabelColor = GreyblueButton),
-                shape = RectangleShape,
                 value = userPassword,
-                textStyle = Typography.bodyLarge,
                 placeholder = {
                     Text(
-                        style = Typography.bodyLarge,
                         text = "Enter password")
                 },
                 onValueChange = {
@@ -154,9 +123,6 @@ class MainActivity : ComponentActivity() {
             )
             Spacer(modifier = Modifier.padding(8.dp))
             OutlinedButton(
-                shape = RectangleShape,
-                border = BorderStroke(2.dp, Black),
-                colors = ButtonDefaults.buttonColors(containerColor = LightblueButton),
                 onClick = {
                 viewModel.signUp(
                     context,
@@ -168,14 +134,10 @@ class MainActivity : ComponentActivity() {
             }) {
 
                 Text(
-                    style = Typography.bodyLarge,
                     text = "Sign Up")
             }
 
             OutlinedButton(
-                shape = RectangleShape,
-                border = BorderStroke(2.dp, Black),
-                colors = ButtonDefaults.buttonColors(containerColor = DarkblueButton),
                 onClick = {
                 viewModel.login(
                     context,
@@ -184,19 +146,15 @@ class MainActivity : ComponentActivity() {
                 )
             }) {
                 Text(
-                    style = Typography.bodyLarge,
-                    text = "Login")
+                    text = "Login"
+                )
             }
 
             OutlinedButton(
-                shape = RectangleShape,
-                border = BorderStroke(2.dp, Black),
-                colors = ButtonDefaults.buttonColors(containerColor = GreyblueButton),
                 onClick = {
                     viewModel.logout(context)
                 }) {
                 Text(
-                    style = Typography.bodyLarge,
                     text = "Logout")
             }
 
@@ -218,7 +176,6 @@ class MainActivity : ComponentActivity() {
 
             if (currentUserState.isNotEmpty()) {
                 Text(
-                    style = Typography.bodyLarge,
                     text = currentUserState)
             }
         }

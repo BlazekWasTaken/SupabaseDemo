@@ -3,5 +3,6 @@
     <font
         android:fontStyle="normal"
         android:fontWeight="400"
-        android:font="@font/jersey_ten" />
+        android:font="@font/geo">
+    </font>
 </font-family>
