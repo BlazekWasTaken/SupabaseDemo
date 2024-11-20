@@ -22,7 +22,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun Screen(
     viewModel: LogInChoiceViewModel = viewModel(),
     onNavigateToLogIn: () -> Unit,
-    onNavigateToSignUp: () -> Unit
+    onNavigateToSignUp: () -> Unit,
+    onNavigateToMinigame: () -> Unit
 ) {
     val context = LocalContext.current
     val userState by viewModel.userState
@@ -48,6 +49,13 @@ fun Screen(
                 onNavigateToSignUp()
             }) {
             Text(text = "Sign Up")
+        }
+        Spacer(modifier = Modifier.padding(8.dp))
+        Button(
+            onClick = {
+                onNavigateToMinigame()
+            }) {
+            Text(text = "Play Game")
         }
     }
 }

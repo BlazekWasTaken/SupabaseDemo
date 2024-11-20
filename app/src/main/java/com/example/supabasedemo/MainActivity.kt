@@ -48,7 +48,10 @@ class MainActivity : ComponentActivity() {
                         },
                         onNavigateToSignUp = {
                             navController.navigate(route = SignUp)
-                        }
+                        },
+                        onNavigateToMinigame = {
+                            navController.navigate(route = Minigame)
+                        },
                     ) }
                     composable<LogIn> { com.example.supabasedemo.compose.logIn.Screen(
                         onNavigateTo = {
@@ -60,6 +63,13 @@ class MainActivity : ComponentActivity() {
                             navController.navigate(route = Test)
                         }
                     ) }
+                    composable<Minigame> {
+                        com.example.supabasedemo.compose.Minigame.Screen(
+                            onNavigateTo = {
+                                navController.navigate(route = Test)
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -73,4 +83,6 @@ class MainActivity : ComponentActivity() {
     object SignUp
     @Serializable
     object Test
+    @Serializable
+    object Minigame
 }
