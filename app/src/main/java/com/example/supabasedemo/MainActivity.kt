@@ -1,25 +1,28 @@
 package com.example.supabasedemo
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.mutableStateOf
+import androidx.navigation.NavController
+import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-
+import com.example.supabasedemo.compose.screens.ChoiceScreen
+import com.example.supabasedemo.compose.screens.LoginScreen
+import com.example.supabasedemo.compose.screens.MainMenuScreen
+import com.example.supabasedemo.compose.screens.SignupScreen
+import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.SupabaseDemoTheme
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
+    private val _userState = mutableStateOf<UserState>(UserState.InLoginChoice)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -28,49 +31,140 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
-                    startDestination = Choice
+                    startDestination = LoginProcess
                 ) {
-                    composable<Test> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(text = "TEST")
+                    navigation<LoginProcess>(startDestination = LoginChoice) {
+                        composable<LoginChoice> { ChoiceScreen(
+                            onNavigateToLogIn = {
+                                navController.navigate(route = Login)
+                            },
+                            onNavigateToSignUp = {
+                                navController.navigate(route = Signup)
+                            },
+                            getState = {
+                                return@ChoiceScreen _userState
+                            },
+                            setState = {
+                                setState(it)
+                            }
+                        ) }
+                        composable<Login> { LoginScreen(
+                            onNavigateToMainMenu = {
+                                navController.navigate(route = MainMenu)
+                                {
+                                    popUpToTop(navController)
+                                }
+                            },
+                            getState = {
+                                return@LoginScreen _userState
+                            },
+                            setState = {
+                                setState(it)
+                            }
+                        ) }
+                        composable<Signup> { SignupScreen(
+                            onNavigateToChoice = {
+                                navController.navigate(route = LoginChoice) {
+                                    popUpToTop(navController)
+                                }
+                            },
+                            getState = {
+                                return@SignupScreen _userState
+                            },
+                            setState = {
+                                setState(it)
+                            }
+                        ) }
+                    }
+                    navigation<MainMenu>(startDestination = Menu) {
+                        composable<Menu> { MainMenuScreen(
+                            getState = {
+                                return@MainMenuScreen _userState
+                            },
+                            setState = {
+                                setState(it)
+                            }
+                        ) }
+                        composable<Stats> {
+
+                        }
+                        composable<Tutorial> {
+
                         }
                     }
+                    navigation<Settings>(startDestination = SettingsMenu) {
+                        composable<SettingsMenu> {
 
-                    composable<Choice> { com.example.supabasedemo.compose.logInChoice.Screen(
-                        onNavigateToLogIn = {
-                            navController.navigate(route = LogIn)
-                        },
-                        onNavigateToSignUp = {
-                            navController.navigate(route = SignUp)
                         }
-                    ) }
-                    composable<LogIn> { com.example.supabasedemo.compose.logIn.Screen(
-                        onNavigateTo = {
-                            navController.navigate(route = Test)
+                        composable<AccountInfo> {
+
                         }
-                    ) }
-                    composable<SignUp> { com.example.supabasedemo.compose.signUp.Screen(
-                        onNavigateTo = {
-                            navController.navigate(route = Test)
+                        composable<Sounds> {
+
                         }
-                    ) }
+                        composable<Theme> {
+
+                        }
+                        composable<Demo> {
+
+                        }
+                    }
+                    navigation<Game>(startDestination = GameChoice) {
+                        composable<GameChoice> {
+
+                        }
+                    }
                 }
             }
         }
     }
 
+    // region objects
     @Serializable
-    object Choice
+    object LoginProcess
     @Serializable
-    object LogIn
+    object LoginChoice
     @Serializable
-    object SignUp
+    object Login
     @Serializable
-    object Test
+    object Signup
+
+    @Serializable
+    object MainMenu
+    @Serializable
+    object Menu
+    @Serializable
+    object Stats
+    @Serializable
+    object Tutorial
+
+    @Serializable
+    object Settings
+    @Serializable
+    object SettingsMenu
+    @Serializable
+    object AccountInfo
+    @Serializable
+    object Sounds
+    @Serializable
+    object Theme
+    @Serializable
+    object Demo
+
+    @Serializable
+    object Game
+    @Serializable
+    object GameChoice
+    // endregion
+
+    private fun NavOptionsBuilder.popUpToTop(navController: NavController) {
+        popUpTo(navController.currentBackStackEntry?.destination?.route ?: return) {
+            inclusive =  true
+        }
+    }
+
+    private fun setState(state: UserState) {
+        _userState.value = state
+        Toast.makeText(this, _userState.value.toString(), Toast.LENGTH_SHORT).show()
+    }
 }

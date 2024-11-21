@@ -66,7 +66,6 @@ dependencies {
 
     implementation(libs.ktor.client.okhttp)
 
-
     //noinspection UseTomlInstead
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 

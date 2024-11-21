@@ -1,4 +1,4 @@
-package com.example.supabasedemo.compose.logInChoice
+package com.example.supabasedemo.compose.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,26 +8,31 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.supabasedemo.compose.viewModels.MainViewModel
+import com.example.supabasedemo.data.model.MyButton
+import com.example.supabasedemo.data.model.UserState
 
 @Composable
-fun Screen(
-    viewModel: LogInChoiceViewModel = viewModel(),
+fun ChoiceScreen(
     onNavigateToLogIn: () -> Unit,
-    onNavigateToSignUp: () -> Unit
+    onNavigateToSignUp: () -> Unit,
+    getState: () -> MutableState<UserState>,
+    setState: (state: UserState) -> Unit
 ) {
-    val context = LocalContext.current
-    val userState by viewModel.userState
+    val viewModel = MainViewModel(LocalContext.current, setState = { setState(it) })
+//    val userState by remember { getState() }
 
-    var currentUserState by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        setState(UserState.InLoginChoice)
+    }
 
     Column(
         modifier = Modifier
@@ -38,16 +43,32 @@ fun Screen(
     ) {
         Button(
             onClick = {
-                onNavigateToLogIn()
+                setState(UserState.ChoseLogin)
             }) {
             Text(text = "Log In")
         }
         Spacer(modifier = Modifier.padding(8.dp))
         Button(
             onClick = {
-                onNavigateToSignUp()
+                setState(UserState.ChoseSignup)
             }) {
             Text(text = "Sign Up")
+        }
+    }
+
+    when (getState().value) {
+        is UserState.ChoseLogin -> {
+            LaunchedEffect(Unit) {
+                onNavigateToLogIn()
+            }
+        }
+        is UserState.ChoseSignup -> {
+            LaunchedEffect(Unit) {
+                onNavigateToSignUp()
+            }
+        }
+        else -> {
+
         }
     }
 }
