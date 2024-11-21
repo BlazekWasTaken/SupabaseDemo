@@ -47,8 +47,11 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import android.Manifest
 import android.app.Activity
+import com.example.supabasedemo.data.network.SupabaseClient.client
+
 
 import androidx.camera.view.PreviewView
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -62,6 +65,7 @@ import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
 import com.example.supabasedemo.data.model.UserState
+import com.example.supabasedemo.data.network.SupabaseClient
 import com.example.supabasedemo.ui.theme.SupabaseDemoTheme
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -69,7 +73,18 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.WriterException
 import com.google.zxing.qrcode.QRCodeWriter
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import java.util.UUID
 import java.util.concurrent.Executors
+import kotlin.math.log
 
 import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.Surface
@@ -391,11 +406,53 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun getCurrentUser(): JsonObject? {
+        val user = client.auth.currentUserOrNull()
+        val metadata = user?.userMetadata
+        return metadata
+    }
+
+    @Serializable
+    data class Game(
+        val uuid: String,
+        val user1: String,
+        val user2: String? = null
+    )
+
+    private fun createGameInSupabase(gameUuid: String, onGameCreated: () -> Unit, onError: (String) -> Unit){
+        val loggedInUser = getCurrentUser()
+
+        val gameData = Game(
+            uuid = gameUuid,
+            user1 = loggedInUser?.get("sub").toString().trim().replace("\"", ""),
+        )
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val result = client.from("games")
+                    .insert(gameData)
+
+                Log.d("Supabase", "Game created: $result")
+
+                withContext(Dispatchers.Main) {
+                    onError("Error creating game.")
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Log.d("Supabase", "catch (e: Exception: $e")
+                    onError(e.message ?: "Unexpected error occurred.")
+                }
+            }
+        }
+    }
+
     @Composable
-    fun CreateGameScreen(onGameCreated: () -> Unit) {
+    fun CreateGameScreen(onGameCreated: (String) -> Unit) {
         var qrCodeBitmap by remember { mutableStateOf<Bitmap?>(null) }
         var showScanner by remember { mutableStateOf(false) }
         var scannedQRCode by remember { mutableStateOf<String?>(null) }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
+        val coroutineScope = rememberCoroutineScope()
 
         Column(
             modifier = Modifier
@@ -405,14 +462,24 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(onClick = {
-                val gameData = "Game Data"
-                try {
-                    qrCodeBitmap = generateQRCode(gameData) ?: throw Exception("Bitmap generation returned null")
-                } catch (e: Exception) {
-                    Log.e("QRCode", "Error generating QR code: ${e.message}")
+                val gameUuid = UUID.randomUUID().toString()
+                coroutineScope.launch{
+                    createGameInSupabase(gameUuid, onGameCreated = {
+                        qrCodeBitmap = generateQRCode(gameUuid) ?: run {
+                            errorMessage = "Error generating QR code"
+                            return@createGameInSupabase
+                        }
+                    }, onError = {
+                        errorMessage = it
+                    })
                 }
+//                try {
+//                    qrCodeBitmap = generateQRCode(gameData) ?: throw Exception("Bitmap generation returned null")
+//                } catch (e: Exception) {
+//                    Log.e("QRCode", "Error generating QR code: ${e.message}")
+//                }
             }) {
-                Text("Generate QR Code")
+                Text("Generate QR Code aka Create Game")
             }
             Spacer(modifier = Modifier.padding(16.dp))
 
