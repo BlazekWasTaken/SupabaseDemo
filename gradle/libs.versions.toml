@@ -34,8 +34,12 @@ barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref =
 barcode-scanning-v1702 = { module = "com.google.mlkit:barcode-scanning", version.ref = "googleBarcodeScanning" }
 barcode-scanning-v1703 = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanningVersion" }
 bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bom" }
+bom-vversion = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bomVersion" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktorClientOkhttp" }
+postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt" }
+supabase-auth-kt = { module = "io.github.jan-tennert.supabase:auth-kt" }
+supabase-realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt" }
 zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
 
 [plugins]
