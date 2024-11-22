@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.realtime.kt)
 
     implementation(libs.ktor.client.okhttp)
+    implementation(libs.postgrest.kt)
 
     //noinspection UseTomlInstead
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
@@ -71,13 +72,9 @@ dependencies {
     implementation (libs.androidx.camera.camera2)
     implementation (libs.androidx.camera.lifecycle)
     implementation (libs.androidx.camera.view)
-    implementation (libs.barcode.scanning.v1703)
-    implementation (libs.barcode.scanning.v1702)
     implementation (libs.androidx.camera.core)
     implementation (libs.androidx.camera.mlkit.vision)
 
-    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.2"))
-    implementation("io.github.jan-tennert.supabase:postgrest-kt")
-    implementation("io.ktor:ktor-client-android:3.0.1")
+
 
 }
