@@ -414,9 +414,14 @@ class MainActivity : ComponentActivity() {
 
     @Serializable
     data class Game(
+        val id: Long? = null,
         val uuid: String,
-        val user1: String,
-        val user2: String? = null
+        val start_time: String? = null,
+        val end_time: String? = null,
+        val round_no: Short = 0,
+        val user1: String?,
+        val user2: String? = null,
+        val won: Boolean? = null
     )
 
     private fun createGameInSupabase(gameUuid: String, onGameCreated: () -> Unit, onError: (String) -> Unit){
@@ -429,17 +434,50 @@ class MainActivity : ComponentActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val result = client.from("games")
-                    .insert(gameData)
+                val createdGame = client.from("games")
+                    .insert(gameData){
+                        select()
+                    }.decodeSingle<Game>()
 
-                Log.d("Supabase", "Game created: $result")
+                    Log.d("Supabase", "Game created: $createdGame")
 
-                withContext(Dispatchers.Main) {
-                    onError("Error creating game.")
-                }
+                    withContext(Dispatchers.Main) {
+                        onGameCreated()
+                    }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Log.d("Supabase", "catch (e: Exception: $e")
+                    onError(e.message ?: "Unexpected error occurred.")
+                }
+            }
+        }
+    }
+
+    private fun joinGameInSupabase(gameUuid: String, onGameJoined: (Game) -> Unit, onError: (String) -> Unit) {
+        Log.d("Supabase-Join-Game", "Joining game: $gameUuid")
+        val loggedInUser = getCurrentUser()
+        val user2Uuid = loggedInUser?.get("sub").toString().trim().replace("\"", "")
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val updatedGame = client.from("games")
+                    .update({
+                        Game::user2 setTo user2Uuid
+                    }) {
+                        select()
+                        filter{
+                            Game::uuid eq gameUuid
+                        }
+                    }.decodeSingle<Game>()
+
+                Log.d("Supabase-Join-Game", "Game joined: $updatedGame")
+
+                withContext(Dispatchers.Main) {
+                    onGameJoined(updatedGame)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Log.d("Supabase-Join-Game", "Error joining game: $e")
                     onError(e.message ?: "Unexpected error occurred.")
                 }
             }
@@ -451,6 +489,7 @@ class MainActivity : ComponentActivity() {
         var qrCodeBitmap by remember { mutableStateOf<Bitmap?>(null) }
         var showScanner by remember { mutableStateOf(false) }
         var scannedQRCode by remember { mutableStateOf<String?>(null) }
+        var gameDetails by remember { mutableStateOf<Game?>(null) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
         val coroutineScope = rememberCoroutineScope()
 
@@ -473,11 +512,6 @@ class MainActivity : ComponentActivity() {
                         errorMessage = it
                     })
                 }
-//                try {
-//                    qrCodeBitmap = generateQRCode(gameData) ?: throw Exception("Bitmap generation returned null")
-//                } catch (e: Exception) {
-//                    Log.e("QRCode", "Error generating QR code: ${e.message}")
-//                }
             }) {
                 Text("Generate QR Code aka Create Game")
             }
@@ -503,6 +537,16 @@ class MainActivity : ComponentActivity() {
                 QRCodeScanner(onScanSuccess = { qrCode ->
                     showScanner = false
                     scannedQRCode = qrCode
+                    scannedQRCode?.let { gameUuid ->
+                        coroutineScope.launch {
+                            joinGameInSupabase(gameUuid, onGameJoined = { game ->
+                                gameDetails = game
+                                Log.d("QRCodeScanner", "Joined game: $gameUuid")
+                            }, onError = { error ->
+                                errorMessage = error
+                            })
+                        }
+                    }
                 }, onScanError = {
                     showScanner = false
                     Log.e("QRCode", "Error scanning QR code")
@@ -513,6 +557,25 @@ class MainActivity : ComponentActivity() {
             scannedQRCode?.let {
                 Spacer(modifier = Modifier.padding(16.dp))
                 Text("Scanned QR Code: $it")
+            }
+
+            gameDetails?.let { game ->
+                Spacer(modifier = Modifier.padding(16.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Game Details")
+                    Text("Game UUID: ${game.uuid}")
+                    Text("User 1: ${game.user1}")
+                    Text("User 2: ${game.user2 ?: "Waiting for player"}")
+                    Text("Round: ${game.round_no}")
+                    Text("Start Time: ${game.start_time ?: "Not started yet"}")
+                    Text("End Time: ${game.end_time ?: "Not ended yet"}")
+                    Text("Winner: ${game.won?.let { if (it) "User 1" else "User 2" } ?: "TBD"}")
+                }
+            }
+
+            errorMessage?.let {
+                Spacer(modifier = Modifier.padding(16.dp))
+                Text("Error: $it", color = Color.Red)
             }
         }
     }
