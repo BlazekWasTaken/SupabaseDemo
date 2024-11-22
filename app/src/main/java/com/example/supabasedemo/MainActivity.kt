@@ -100,7 +100,7 @@ class MainActivity : ComponentActivity() {
 
                         }
                         composable<Sounds> {
-
+                          
                         }
                         composable<Theme> {
 
@@ -137,7 +137,6 @@ class MainActivity : ComponentActivity() {
     object Stats
     @Serializable
     object Tutorial
-
     @Serializable
     object Settings
     @Serializable
