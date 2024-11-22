@@ -65,7 +65,6 @@ import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
 import com.example.supabasedemo.data.model.UserState
-import com.example.supabasedemo.data.network.SupabaseClient
 import com.example.supabasedemo.ui.theme.SupabaseDemoTheme
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -80,7 +79,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -377,7 +375,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @OptIn(ExperimentalGetImage::class)
-    public fun processImageProxy(
+    fun processImageProxy(
         scanner: BarcodeScanner,
         imageProxy: ImageProxy,
         onScanSuccess: (String) -> Unit,

@@ -1,10 +1,7 @@
 [versions]
 agp = "8.7.2"
 barcodeScanning = "17.3.0"
-barcodeScanningVersion = "17.0.3"
-bomVersion = "VERSION"
 cameraCamera2 = "1.4.0"
-googleBarcodeScanning = "17.0.2"
 kotlin = "2.0.0"
 coreKtx = "1.15.0"
 lifecycleRuntimeKtx = "2.8.7"
@@ -14,8 +11,7 @@ composeNavigation = "2.8.4"
 serialization = "1.7.3"
 
 ktorClientOkhttp = "3.0.0"
-bom = "3.0.1"
-postgrest = "3.0.1"
+bom = "3.0.2"
 zxingAndroidEmbedded = "4.1.0"
 
 [libraries]
@@ -37,16 +33,10 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 
 auth-kt = { module = "io.github.jan-tennert.supabase:auth-kt" }
 barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
-barcode-scanning-v1702 = { module = "com.google.mlkit:barcode-scanning", version.ref = "googleBarcodeScanning" }
-barcode-scanning-v1703 = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanningVersion" }
 bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bom" }
-bom-vversion = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bomVersion" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktorClientOkhttp" }
-postgrest = { module = "io.github.jan-tennert.supabase-kt:postgrest", version.ref = "postgrest" }
 postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt" }
-supabase-auth-kt = { module = "io.github.jan-tennert.supabase:auth-kt" }
-supabase-realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt" }
 zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
 
 [plugins]
