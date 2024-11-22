@@ -17,8 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.supabasedemo.compose.viewModels.MainViewModel
-import com.example.supabasedemo.data.model.MyButton
 import com.example.supabasedemo.data.model.UserState
+import com.example.supabasedemo.ui.theme.MyOutlinedButton
 
 @Composable
 fun ChoiceScreen(
@@ -41,14 +41,14 @@ fun ChoiceScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(
+        MyOutlinedButton(
             onClick = {
                 setState(UserState.ChoseLogin)
             }) {
             Text(text = "Log In")
         }
         Spacer(modifier = Modifier.padding(8.dp))
-        Button(
+        MyOutlinedButton(
             onClick = {
                 setState(UserState.ChoseSignup)
             }) {

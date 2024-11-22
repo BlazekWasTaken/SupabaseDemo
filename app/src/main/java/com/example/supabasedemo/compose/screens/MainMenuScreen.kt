@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.supabasedemo.compose.viewModels.MainViewModel
-import com.example.supabasedemo.data.model.MyButton
 import com.example.supabasedemo.data.model.UserState
+import com.example.supabasedemo.ui.theme.MyOutlinedButton
 
 @Composable
 fun MainMenuScreen(
@@ -37,35 +37,35 @@ fun MainMenuScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(
+        MyOutlinedButton(
             onClick = {
                 setState(UserState.ChoseLogout)
             }) {
             Text(text = "Log out")
         }
         Spacer(modifier = Modifier.padding(8.dp))
-        Button(
+        MyOutlinedButton(
             onClick = {
                 setState(UserState.InSettings)
             }) {
             Text(text = "Settings")
         }
         Spacer(modifier = Modifier.padding(8.dp))
-        Button(
+        MyOutlinedButton(
             onClick = {
                 setState(UserState.ChoseGame)
             }) {
             Text(text = "Play now")
         }
         Spacer(modifier = Modifier.padding(8.dp))
-        Button(
+        MyOutlinedButton(
             onClick = {
                 setState(UserState.ChoseStats)
             }) {
             Text(text = "See stats")
         }
         Spacer(modifier = Modifier.padding(8.dp))
-        Button(
+        MyOutlinedButton(
             onClick = {
                 setState(UserState.ChoseTutorial)
             }) {

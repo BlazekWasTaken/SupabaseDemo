@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.example.supabasedemo.LoadingComponent
 import com.example.supabasedemo.compose.viewModels.MainViewModel
 import com.example.supabasedemo.data.model.UserState
+import com.example.supabasedemo.ui.theme.MyOutlinedButton
+import com.example.supabasedemo.ui.theme.MyOutlinedTextField
 import com.example.supabasedemo.ui.theme.Typography
 
 @Composable
@@ -52,7 +54,7 @@ fun SignupScreen(onNavigateToChoice: () -> Unit,
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        OutlinedTextField(
+        MyOutlinedTextField(
             value = userEmail,
             placeholder = {
                 Text(text = "Enter email")
@@ -61,7 +63,7 @@ fun SignupScreen(onNavigateToChoice: () -> Unit,
                 userEmail = it
             })
         Spacer(modifier = Modifier.padding(8.dp))
-        OutlinedTextField(
+        MyOutlinedTextField(
             value = username,
             placeholder = {
                 Text(text = "Enter username")
@@ -70,7 +72,7 @@ fun SignupScreen(onNavigateToChoice: () -> Unit,
                 username = it
             })
         Spacer(modifier = Modifier.padding(8.dp))
-        OutlinedTextField(
+        MyOutlinedTextField(
             value = userPassword,
             placeholder = {
                 Text(text = "Enter password")
@@ -82,7 +84,7 @@ fun SignupScreen(onNavigateToChoice: () -> Unit,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
         Spacer(modifier = Modifier.padding(8.dp))
-        OutlinedButton(
+        MyOutlinedButton(
             onClick = {
                 viewModel.supabase.signUp(
                     userEmail,

@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.example.supabasedemo.LoadingComponent
 import com.example.supabasedemo.compose.viewModels.MainViewModel
 import com.example.supabasedemo.data.model.UserState
+import com.example.supabasedemo.ui.theme.MyOutlinedButton
+import com.example.supabasedemo.ui.theme.MyOutlinedTextField
 
 @Composable
 fun LoginScreen(
@@ -51,7 +53,7 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        OutlinedTextField(
+        MyOutlinedTextField(
             value = userEmail,
             placeholder = {
                 Text(text = "Enter email")
@@ -61,7 +63,7 @@ fun LoginScreen(
             }
         )
         Spacer(modifier = Modifier.padding(8.dp))
-        OutlinedTextField(
+        MyOutlinedTextField(
             value = userPassword,
             placeholder = {
                 Text(text = "Enter password")
@@ -73,7 +75,7 @@ fun LoginScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
         Spacer(modifier = Modifier.padding(8.dp))
-        OutlinedButton(onClick = {
+        MyOutlinedButton(onClick = {
             viewModel.supabase.login(
                 userEmail,
                 userPassword

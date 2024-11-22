@@ -5,6 +5,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.navigation.NavController
 import androidx.navigation.NavOptionsBuilder
@@ -17,7 +19,9 @@ import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
 import com.example.supabasedemo.data.model.UserState
+import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.SupabaseDemoTheme
+import com.example.supabasedemo.ui.theme.Surface
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
@@ -27,93 +31,101 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SupabaseDemoTheme {
-                val navController = rememberNavController()
-                NavHost(
-                    navController = navController,
-                    startDestination = LoginProcess
-                ) {
-                    navigation<LoginProcess>(startDestination = LoginChoice) {
-                        composable<LoginChoice> { ChoiceScreen(
-                            onNavigateToLogIn = {
-                                navController.navigate(route = Login)
-                            },
-                            onNavigateToSignUp = {
-                                navController.navigate(route = Signup)
-                            },
-                            getState = {
-                                return@ChoiceScreen _userState
-                            },
-                            setState = {
-                                setState(it)
-                            }
-                        ) }
-                        composable<Login> { LoginScreen(
-                            onNavigateToMainMenu = {
-                                navController.navigate(route = MainMenu)
-                                {
-                                    popUpToTop(navController)
-                                }
-                            },
-                            getState = {
-                                return@LoginScreen _userState
-                            },
-                            setState = {
-                                setState(it)
-                            }
-                        ) }
-                        composable<Signup> { SignupScreen(
-                            onNavigateToChoice = {
-                                navController.navigate(route = LoginChoice) {
-                                    popUpToTop(navController)
-                                }
-                            },
-                            getState = {
-                                return@SignupScreen _userState
-                            },
-                            setState = {
-                                setState(it)
-                            }
-                        ) }
+            AppTheme {
+                Surface() {
+                    Navigation()
+                }
+
+            }
+        }
+    }
+
+    @Composable
+    private fun Navigation() {
+        val navController = rememberNavController()
+        NavHost(
+            navController = navController,
+            startDestination = LoginProcess
+        ) {
+            navigation<LoginProcess>(startDestination = LoginChoice) {
+                composable<LoginChoice> { ChoiceScreen(
+                    onNavigateToLogIn = {
+                        navController.navigate(route = Login)
+                    },
+                    onNavigateToSignUp = {
+                        navController.navigate(route = Signup)
+                    },
+                    getState = {
+                        return@ChoiceScreen _userState
+                    },
+                    setState = {
+                        setState(it)
                     }
-                    navigation<MainMenu>(startDestination = Menu) {
-                        composable<Menu> { MainMenuScreen(
-                            getState = {
-                                return@MainMenuScreen _userState
-                            },
-                            setState = {
-                                setState(it)
-                            }
-                        ) }
-                        composable<Stats> {
-
+                ) }
+                composable<Login> { LoginScreen(
+                    onNavigateToMainMenu = {
+                        navController.navigate(route = MainMenu)
+                        {
+                            popUpToTop(navController)
                         }
-                        composable<Tutorial> {
-
-                        }
+                    },
+                    getState = {
+                        return@LoginScreen _userState
+                    },
+                    setState = {
+                        setState(it)
                     }
-                    navigation<Settings>(startDestination = SettingsMenu) {
-                        composable<SettingsMenu> {
-
+                ) }
+                composable<Signup> { SignupScreen(
+                    onNavigateToChoice = {
+                        navController.navigate(route = LoginChoice) {
+                            popUpToTop(navController)
                         }
-                        composable<AccountInfo> {
-
-                        }
-                        composable<Sounds> {
-                          
-                        }
-                        composable<Theme> {
-
-                        }
-                        composable<Demo> {
-
-                        }
+                    },
+                    getState = {
+                        return@SignupScreen _userState
+                    },
+                    setState = {
+                        setState(it)
                     }
-                    navigation<Game>(startDestination = GameChoice) {
-                        composable<GameChoice> {
-
-                        }
+                ) }
+            }
+            navigation<MainMenu>(startDestination = Menu) {
+                composable<Menu> { MainMenuScreen(
+                    getState = {
+                        return@MainMenuScreen _userState
+                    },
+                    setState = {
+                        setState(it)
                     }
+                ) }
+                composable<Stats> {
+
+                }
+                composable<Tutorial> {
+
+                }
+            }
+            navigation<Settings>(startDestination = SettingsMenu) {
+                composable<SettingsMenu> {
+
+                }
+                composable<AccountInfo> {
+
+                }
+                composable<Sounds> {
+
+                }
+                composable<Theme> {
+
+                }
+                composable<Demo> {
+
+                }
+            }
+            navigation<Game>(startDestination = GameChoice) {
+                composable<GameChoice> {
+
                 }
             }
         }
