@@ -46,6 +46,8 @@ import com.example.supabasedemo.ui.theme.Black
 import com.example.supabasedemo.ui.theme.DarkBlue
 import com.example.supabasedemo.ui.theme.GreyBlue
 import com.example.supabasedemo.ui.theme.LightBlue
+import com.example.supabasedemo.ui.theme.MyOutlinedButton
+import com.example.supabasedemo.ui.theme.MyOutlinedTextField
 import com.example.supabasedemo.ui.theme.SupabaseDemoTheme
 import com.example.supabasedemo.ui.theme.Typography
 
@@ -89,7 +91,7 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
+            MyOutlinedTextField(
                 value = userEmail,
                 placeholder = {
                     Text(
@@ -99,7 +101,7 @@ class MainActivity : ComponentActivity() {
                     userEmail = it
                 })
             Spacer(modifier = Modifier.padding(8.dp))
-            OutlinedTextField(
+            MyOutlinedTextField(
                 value = username,
                 placeholder = {
                     Text(
@@ -109,7 +111,7 @@ class MainActivity : ComponentActivity() {
                     username = it
                 })
             Spacer(modifier = Modifier.padding(8.dp))
-            OutlinedTextField(
+            MyOutlinedTextField(
                 value = userPassword,
                 placeholder = {
                     Text(
@@ -122,7 +124,7 @@ class MainActivity : ComponentActivity() {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             )
             Spacer(modifier = Modifier.padding(8.dp))
-            OutlinedButton(
+            MyOutlinedButton(
                 onClick = {
                 viewModel.signUp(
                     context,
@@ -132,12 +134,12 @@ class MainActivity : ComponentActivity() {
                     macAddress
                 )
             }) {
-
                 Text(
+                    style = AppTheme.typography.labelLarge,
                     text = "Sign Up")
             }
 
-            OutlinedButton(
+            MyOutlinedButton(
                 onClick = {
                 viewModel.login(
                     context,
@@ -146,15 +148,17 @@ class MainActivity : ComponentActivity() {
                 )
             }) {
                 Text(
+                    style = AppTheme.typography.labelLarge,
                     text = "Login"
                 )
             }
 
-            OutlinedButton(
+            MyOutlinedButton(
                 onClick = {
                     viewModel.logout(context)
                 }) {
                 Text(
+                    style = AppTheme.typography.labelLarge,
                     text = "Logout")
             }
 
