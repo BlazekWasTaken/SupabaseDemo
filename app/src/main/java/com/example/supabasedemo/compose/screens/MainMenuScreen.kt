@@ -1,0 +1,117 @@
+package com.example.supabasedemo.compose.screens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.example.supabasedemo.compose.viewModels.MainViewModel
+import com.example.supabasedemo.data.model.MyButton
+import com.example.supabasedemo.data.model.UserState
+
+@Composable
+fun MainMenuScreen(
+    getState: () -> MutableState<UserState>,
+    setState: (state: UserState) -> Unit
+) {
+    val viewModel = MainViewModel(LocalContext.current, setState = { setState(it) })
+//    val userState by remember { getState() }
+
+    LaunchedEffect(Unit) {
+        setState(UserState.InMainMenu)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Button(
+            onClick = {
+                setState(UserState.ChoseLogout)
+            }) {
+            Text(text = "Log out")
+        }
+        Spacer(modifier = Modifier.padding(8.dp))
+        Button(
+            onClick = {
+                setState(UserState.InSettings)
+            }) {
+            Text(text = "Settings")
+        }
+        Spacer(modifier = Modifier.padding(8.dp))
+        Button(
+            onClick = {
+                setState(UserState.ChoseGame)
+            }) {
+            Text(text = "Play now")
+        }
+        Spacer(modifier = Modifier.padding(8.dp))
+        Button(
+            onClick = {
+                setState(UserState.ChoseStats)
+            }) {
+            Text(text = "See stats")
+        }
+        Spacer(modifier = Modifier.padding(8.dp))
+        Button(
+            onClick = {
+                setState(UserState.ChoseTutorial)
+            }) {
+            Text(text = "How to play?")
+        }
+    }
+
+    val userState = getState().value
+    when (userState) {
+        is UserState.ChoseLogout -> {
+            LaunchedEffect(Unit) {
+                // logout
+            }
+        }
+        is UserState.InSettings -> {
+            LaunchedEffect(Unit) {
+                // go to settings
+            }
+        }
+        is UserState.ChoseGame -> {
+            LaunchedEffect(Unit) {
+                // go to game menu
+            }
+        }
+        is UserState.ChoseStats -> {
+            LaunchedEffect(Unit) {
+                // go to stats
+            }
+        }
+        is UserState.ChoseTutorial -> {
+            LaunchedEffect(Unit) {
+                // go to tutorial
+            }
+        }
+        is UserState.LogoutSucceeded -> {
+            LaunchedEffect(Unit) {
+                // go to login choice
+            }
+        }
+        is UserState.LogoutFailed -> {
+            LaunchedEffect(Unit) {
+                setState(UserState.InMainMenu)
+            }
+        }
+        else -> {
+
+        }
+    }
+}
