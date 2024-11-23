@@ -169,6 +169,7 @@ class MainActivity : ComponentActivity() {
     object Stats
     @Serializable
     object Tutorial
+
     @Serializable
     object Settings
     @Serializable

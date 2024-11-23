@@ -68,10 +68,12 @@ fun CreateGameScreen(
                             errorMessage = "Error generating QR code"
                             return@createGameInSupabase
                         }
-                        setState(UserState.GameCreated) },
+                        setState(UserState.GameCreated)
+                    },
                     onError = { errorMessage = it },
                     currentUser = viewModel.supabaseAuth.getCurrentUser()
-                ) }
+                )
+            }
         ) {
             Text("Generate QR Code aka Create Game")
         }
@@ -94,6 +96,7 @@ fun CreateGameScreen(
                     modifier = Modifier.size(200.dp)
                 )
             }
+
             is UserState.CameraOpened -> {
                 QRCodeScanner(
                     onScanSuccess = {
@@ -103,7 +106,8 @@ fun CreateGameScreen(
                                 gameUuid,
                                 onGameJoined = {
                                     gameDetails = it
-                                    Log.d("QRCodeScanner", "Joined game: $gameUuid") },
+                                    Log.d("QRCodeScanner", "Joined game: $gameUuid")
+                                },
                                 onError = { errorMessage = it },
                                 currentUser = viewModel.supabaseAuth.getCurrentUser()
                             )
@@ -116,6 +120,7 @@ fun CreateGameScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }
+
             is UserState.QrScanned -> {
                 Text("Scanned QR Code: $scannedQRCode")
                 Spacer(modifier = Modifier.padding(16.dp))
@@ -130,9 +135,11 @@ fun CreateGameScreen(
                     Text("Winner: ${gameDetails!!.won?.let { if (it) "User 1" else "User 2" } ?: "TBD"}")
                 }
             }
+
             is UserState.QrScanFailed -> {
                 Text("Error: $errorMessage", color = Color.Red)
             }
+
             else -> {
 
             }

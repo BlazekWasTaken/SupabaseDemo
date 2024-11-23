@@ -54,11 +54,13 @@ fun ChoiceScreen(
                 onNavigateToLogIn()
             }
         }
+
         is UserState.InSignup -> {
             LaunchedEffect(Unit) {
                 onNavigateToSignUp()
             }
         }
+
         else -> {
 
         }

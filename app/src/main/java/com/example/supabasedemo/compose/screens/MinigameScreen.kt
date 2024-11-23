@@ -1,8 +1,6 @@
-package com.example.supabasedemo.compose.Minigame
+package com.example.supabasedemo.compose.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import android.content.res.Resources.getSystem
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -15,8 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.supabasedemo.data.model.UserState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -28,9 +28,14 @@ data class RedCircle(
     var isVisible: Boolean = false
 )
 
+val Int.px: Int get() = (this * getSystem().displayMetrics.density).toInt()
+
 @Composable
-fun Screen(onNavigateTo: () -> Unit) {
-    var score by remember { mutableStateOf(0) }
+fun MinigameScreen(
+    getState: () -> MutableState<UserState>,
+    setState: (state: UserState) -> Unit
+) {
+    var score by remember { mutableIntStateOf(0) }
 
     val circleSize = 50.dp
     val density = LocalDensity.current
@@ -43,8 +48,8 @@ fun Screen(onNavigateTo: () -> Unit) {
             .fillMaxSize()
             .background(Color.LightGray)
     ) {
-        val maxWidthPx = with(density) { (maxWidth - circleSize).toPx() }
-        val maxHeightPx = with(density) { (maxHeight - circleSize - 50.dp).toPx() }
+        val maxWidthPx = (this.maxWidth - circleSize).value.toInt().px
+        val maxHeightPx = (this.maxHeight - circleSize - 50.dp).value.toInt().px
 
         val greenOffsetX = remember { Animatable(Random.nextFloat() * maxWidthPx) }
         val greenOffsetY = remember { Animatable(Random.nextFloat() * maxHeightPx) }
@@ -52,7 +57,7 @@ fun Screen(onNavigateTo: () -> Unit) {
         var isGreenVisible by remember { mutableStateOf(true) }
 
         val redCircles = remember { mutableStateListOf<RedCircle>() }
-        var redCircleId by remember { mutableStateOf(0) }
+        var redCircleId by remember { mutableIntStateOf(0) }
 
         LaunchedEffect(Unit) {
             redCircles.add(
@@ -64,7 +69,7 @@ fun Screen(onNavigateTo: () -> Unit) {
             )
         }
 
-        var cycleCount by remember { mutableStateOf(0) }
+        var cycleCount by remember { mutableIntStateOf(0) }
 
         LaunchedEffect(key1 = "AnimationLoop") {
             println("Animation loop started")
@@ -119,7 +124,6 @@ fun Screen(onNavigateTo: () -> Unit) {
 
                 greenAnimX.join()
                 greenAnimY.join()
-
 
                 isGreenVisible = false
 

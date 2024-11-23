@@ -80,36 +80,43 @@ fun MainMenuScreen(
                 viewModel.supabaseAuth.logout()
             }
         }
+
         is UserState.InSettings -> {
             LaunchedEffect(Unit) {
                 // go to settings
             }
         }
+
         is UserState.InGameCreation -> {
             LaunchedEffect(Unit) {
                 onNavigateToGame()
             }
         }
+
         is UserState.InStats -> {
             LaunchedEffect(Unit) {
                 // go to stats
             }
         }
+
         is UserState.InTutorial -> {
             LaunchedEffect(Unit) {
                 // go to tutorial
             }
         }
+
         is UserState.LogoutSucceeded -> {
             LaunchedEffect(Unit) {
                 onNavigateToLoginChoice()
             }
         }
+
         is UserState.LogoutFailed -> {
             LaunchedEffect(Unit) {
                 setState(UserState.InMainMenu)
             }
         }
+
         else -> {
 
         }
