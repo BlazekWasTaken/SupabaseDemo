@@ -20,7 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.supabasedemo.LoadingComponent
 import com.example.supabasedemo.compose.viewModels.MainViewModel
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.MyOutlinedButton
@@ -97,8 +96,9 @@ fun SignupScreen(
         val userState = getState().value
         when (userState) {
             is UserState.LoginOrSignupLoading -> {
-                LoadingComponent()
+                currentUserState = "Loading..."
             }
+
             is UserState.LoginOrSignupSucceeded -> {
                 val message = userState.message
                 currentUserState = message
@@ -108,14 +108,17 @@ fun SignupScreen(
                     }
                 }
             }
+
             is UserState.LoginOrSignupFailed -> {
                 val message = userState.message
                 currentUserState = message
             }
+
             is UserState.CheckedLoginStatusSucceeded -> {
                 val message = userState.message
                 currentUserState = message
             }
+
             else -> {
 
             }
