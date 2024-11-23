@@ -1,7 +1,6 @@
 package com.example.supabasedemo.data.network
 
 import android.content.Context
-import androidx.compose.runtime.MutableState
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.data.network.SupabaseClient.client
 import com.example.supabasedemo.utils.SharedPreferenceHelper
@@ -10,13 +9,15 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.exceptions.RestException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-class SupabaseHelper(
+class SupabaseAuthHelper(
     private val scope: CoroutineScope,
     val setState: (UserState) -> Unit,
-    private val context: Context) {
+    private val context: Context
+) {
     fun signUp(userEmail: String, userPassword: String, username: String) {
         scope.launch {
             try {
@@ -31,22 +32,25 @@ class SupabaseHelper(
                 }
                 saveToken()
                 setState(UserState.LoginOrSignupSucceeded("Registered successfully!"))
-            } catch(e: Exception) {
+            } catch (e: Exception) {
                 setState(UserState.LoginOrSignupFailed(e.message ?: ""))
             }
         }
     }
+
     private fun saveToken() {
         scope.launch {
             val accessToken = client.auth.currentAccessTokenOrNull()
             val sharedPref = SharedPreferenceHelper(context)
-            sharedPref.saveStringData("accessToken",accessToken)
+            sharedPref.saveStringData("accessToken", accessToken)
         }
     }
+
     private fun getToken(): String? {
         val sharedPref = SharedPreferenceHelper(context)
         return sharedPref.getStringData("accessToken")
     }
+
     fun login(userEmail: String, userPassword: String) {
         scope.launch {
             try {
@@ -60,9 +64,9 @@ class SupabaseHelper(
             } catch (e: Exception) {
                 setState(UserState.LoginOrSignupFailed(e.message ?: ""))
             }
-
         }
     }
+
     fun logout() {
         val sharedPref = SharedPreferenceHelper(context)
         scope.launch {
@@ -76,12 +80,13 @@ class SupabaseHelper(
             }
         }
     }
+
     fun isUserLoggedIn() {
         scope.launch {
             try {
                 setState(UserState.CheckingLoginStatus)
                 val token = getToken()
-                if(token.isNullOrEmpty()) {
+                if (token.isNullOrEmpty()) {
                     setState(UserState.CheckedLoginStatusSucceeded("User not logged in!"))
                 } else {
                     client.auth.retrieveUser(token)
@@ -93,5 +98,11 @@ class SupabaseHelper(
                 setState(UserState.CheckedLoginStatusFailed(e.error))
             }
         }
+    }
+
+    fun getCurrentUser(): JsonObject? {
+        val user = client.auth.currentUserOrNull()
+        val metadata = user?.userMetadata
+        return metadata
     }
 }

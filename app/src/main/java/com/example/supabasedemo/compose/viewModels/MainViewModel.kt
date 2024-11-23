@@ -4,11 +4,15 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.supabasedemo.data.model.UserState
-import com.example.supabasedemo.data.network.SupabaseHelper
+import com.example.supabasedemo.data.network.SupabaseAuthHelper
+import com.example.supabasedemo.data.network.SupabaseDbHelper
 
 class MainViewModel(
     context: Context,
     setState: (state: UserState) -> Unit
-    ) : ViewModel() {
-    val supabase: SupabaseHelper = SupabaseHelper(viewModelScope, setState = { setState(it) } , context)
+) : ViewModel() {
+    val supabaseAuth: SupabaseAuthHelper =
+        SupabaseAuthHelper(viewModelScope, setState = { setState(it) }, context)
+    val supabaseDb: SupabaseDbHelper =
+        SupabaseDbHelper(viewModelScope, setState = { setState(it) }, context)
 }

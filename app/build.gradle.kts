@@ -9,10 +9,12 @@ android {
     namespace = "com.example.supabasedemo"
     compileSdk = 35
 
-    val key: String = com.android.build.gradle.internal.cxx.configure.gradleLocalProperties(rootDir, providers)
-        .getProperty("supabaseKey")
-    val url: String = com.android.build.gradle.internal.cxx.configure.gradleLocalProperties(rootDir, providers)
-        .getProperty("supabaseUrl")
+    val key: String =
+        com.android.build.gradle.internal.cxx.configure.gradleLocalProperties(rootDir, providers)
+            .getProperty("supabaseKey")
+    val url: String =
+        com.android.build.gradle.internal.cxx.configure.gradleLocalProperties(rootDir, providers)
+            .getProperty("supabaseUrl")
 
     defaultConfig {
         applicationId = "com.example.supabasedemo"
@@ -21,8 +23,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        buildConfigField("String","supabaseKey","\"$key\"")
-        buildConfigField("String","supabaseUrl","\"$url\"")
+        buildConfigField("String", "supabaseKey", "\"$key\"")
+        buildConfigField("String", "supabaseUrl", "\"$url\"")
     }
 
     buildTypes {
@@ -69,9 +71,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation(libs.zxing.android.embedded)
     implementation(libs.barcode.scanning)
-    implementation (libs.androidx.camera.camera2)
-    implementation (libs.androidx.camera.lifecycle)
-    implementation (libs.androidx.camera.view)
-    implementation (libs.androidx.camera.core)
-    implementation (libs.androidx.camera.mlkit.vision)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.mlkit.vision)
 }
