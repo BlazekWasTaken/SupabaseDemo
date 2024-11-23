@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,11 +19,12 @@ import com.example.supabasedemo.ui.theme.MyOutlinedButton
 
 @Composable
 fun MainMenuScreen(
+    onNavigateToLoginChoice: () -> Unit,
+    onNavigateToGame: () -> Unit,
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit
 ) {
     val viewModel = MainViewModel(LocalContext.current, setState = { setState(it) })
-//    val userState by remember { getState() }
 
     LaunchedEffect(Unit) {
         setState(UserState.InMainMenu)
@@ -39,7 +39,7 @@ fun MainMenuScreen(
     ) {
         MyOutlinedButton(
             onClick = {
-                setState(UserState.ChoseLogout)
+                setState(UserState.Logout)
             }) {
             Text(text = "Log out")
         }
@@ -53,21 +53,21 @@ fun MainMenuScreen(
         Spacer(modifier = Modifier.padding(8.dp))
         MyOutlinedButton(
             onClick = {
-                setState(UserState.ChoseGame)
+                setState(UserState.InGameCreation)
             }) {
             Text(text = "Play now")
         }
         Spacer(modifier = Modifier.padding(8.dp))
         MyOutlinedButton(
             onClick = {
-                setState(UserState.ChoseStats)
+                setState(UserState.InStats)
             }) {
             Text(text = "See stats")
         }
         Spacer(modifier = Modifier.padding(8.dp))
         MyOutlinedButton(
             onClick = {
-                setState(UserState.ChoseTutorial)
+                setState(UserState.InTutorial)
             }) {
             Text(text = "How to play?")
         }
@@ -75,9 +75,9 @@ fun MainMenuScreen(
 
     val userState = getState().value
     when (userState) {
-        is UserState.ChoseLogout -> {
+        is UserState.Logout -> {
             LaunchedEffect(Unit) {
-                // logout
+                viewModel.supabaseAuth.logout()
             }
         }
         is UserState.InSettings -> {
@@ -85,24 +85,24 @@ fun MainMenuScreen(
                 // go to settings
             }
         }
-        is UserState.ChoseGame -> {
+        is UserState.InGameCreation -> {
             LaunchedEffect(Unit) {
-                // go to game menu
+                onNavigateToGame()
             }
         }
-        is UserState.ChoseStats -> {
+        is UserState.InStats -> {
             LaunchedEffect(Unit) {
                 // go to stats
             }
         }
-        is UserState.ChoseTutorial -> {
+        is UserState.InTutorial -> {
             LaunchedEffect(Unit) {
                 // go to tutorial
             }
         }
         is UserState.LogoutSucceeded -> {
             LaunchedEffect(Unit) {
-                // go to login choice
+                onNavigateToLoginChoice()
             }
         }
         is UserState.LogoutFailed -> {

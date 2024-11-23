@@ -9,20 +9,22 @@ android {
     namespace = "com.example.supabasedemo"
     compileSdk = 35
 
-    val key: String = com.android.build.gradle.internal.cxx.configure.gradleLocalProperties(rootDir, providers)
-        .getProperty("supabaseKey")
-    val url: String = com.android.build.gradle.internal.cxx.configure.gradleLocalProperties(rootDir, providers)
-        .getProperty("supabaseUrl")
+    val key: String =
+        com.android.build.gradle.internal.cxx.configure.gradleLocalProperties(rootDir, providers)
+            .getProperty("supabaseKey")
+    val url: String =
+        com.android.build.gradle.internal.cxx.configure.gradleLocalProperties(rootDir, providers)
+            .getProperty("supabaseUrl")
 
     defaultConfig {
         applicationId = "com.example.supabasedemo"
         minSdk = 34
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
-        buildConfigField("String","supabaseKey","\"$key\"")
-        buildConfigField("String","supabaseUrl","\"$url\"")
+        buildConfigField("String", "supabaseKey", "\"$key\"")
+        buildConfigField("String", "supabaseUrl", "\"$url\"")
     }
 
     buildTypes {
@@ -48,7 +50,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -63,10 +64,16 @@ dependencies {
     implementation(platform(libs.bom))
     implementation(libs.auth.kt)
     implementation(libs.realtime.kt)
-
+    implementation(libs.postgrest.kt)
     implementation(libs.ktor.client.okhttp)
 
     //noinspection UseTomlInstead
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-
+    implementation(libs.zxing.android.embedded)
+    implementation(libs.barcode.scanning)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.mlkit.vision)
 }

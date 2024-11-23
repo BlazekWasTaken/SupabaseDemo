@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,12 +28,12 @@ import com.example.supabasedemo.ui.theme.MyOutlinedTextField
 import com.example.supabasedemo.ui.theme.Typography
 
 @Composable
-fun SignupScreen(onNavigateToChoice: () -> Unit,
-                 getState: () -> MutableState<UserState>,
-                 setState: (state: UserState) -> Unit
+fun SignupScreen(
+    onNavigateToLoginChoice: () -> Unit,
+    getState: () -> MutableState<UserState>,
+    setState: (state: UserState) -> Unit
 ) {
     val viewModel = MainViewModel(LocalContext.current, setState = { setState(it) })
-//    val userState by remember { getState() }
 
     var userEmail by remember { mutableStateOf("") }
     var userPassword by remember { mutableStateOf("") }
@@ -43,8 +41,8 @@ fun SignupScreen(onNavigateToChoice: () -> Unit,
     var currentUserState by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        setState(UserState.ChoseSignup)
-        viewModel.supabase.isUserLoggedIn()
+        setState(UserState.InSignup)
+        viewModel.supabaseAuth.isUserLoggedIn()
     }
 
     Column(
@@ -80,13 +78,13 @@ fun SignupScreen(onNavigateToChoice: () -> Unit,
             onValueChange = {
                 userPassword = it
             },
-            visualTransformation =  PasswordVisualTransformation(),
+            visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
         Spacer(modifier = Modifier.padding(8.dp))
         MyOutlinedButton(
             onClick = {
-                viewModel.supabase.signUp(
+                viewModel.supabaseAuth.signUp(
                     userEmail,
                     userPassword,
                     username
@@ -104,6 +102,11 @@ fun SignupScreen(onNavigateToChoice: () -> Unit,
             is UserState.LoginOrSignupSucceeded -> {
                 val message = userState.message
                 currentUserState = message
+                if (getState().value is UserState.LoginOrSignupSucceeded) {
+                    LaunchedEffect(Unit) {
+                        onNavigateToLoginChoice()
+                    }
+                }
             }
             is UserState.LoginOrSignupFailed -> {
                 val message = userState.message
@@ -121,13 +124,8 @@ fun SignupScreen(onNavigateToChoice: () -> Unit,
         if (currentUserState.isNotEmpty()) {
             Text(
                 style = Typography.bodyLarge,
-                text = currentUserState)
-        }
-
-        if (getState().value is UserState.LoginOrSignupSucceeded) {
-            LaunchedEffect(Unit) {
-                onNavigateToChoice()
-            }
+                text = currentUserState
+            )
         }
     }
 }

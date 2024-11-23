@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,15 +33,14 @@ fun LoginScreen(
     setState: (state: UserState) -> Unit
 ) {
     val viewModel = MainViewModel(LocalContext.current, setState = { setState(it) })
-//    val userState by remember { getState() }
 
     var userEmail by remember { mutableStateOf("") }
     var userPassword by remember { mutableStateOf("") }
     var currentUserState by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        setState(UserState.ChoseLogin)
-        viewModel.supabase.isUserLoggedIn()
+        setState(UserState.InLogin)
+        viewModel.supabaseAuth.isUserLoggedIn()
     }
 
     Column(
@@ -71,12 +68,12 @@ fun LoginScreen(
             onValueChange = {
                 userPassword = it
             },
-            visualTransformation =  PasswordVisualTransformation(),
+            visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
         Spacer(modifier = Modifier.padding(8.dp))
         MyOutlinedButton(onClick = {
-            viewModel.supabase.login(
+            viewModel.supabaseAuth.login(
                 userEmail,
                 userPassword
             )
@@ -92,6 +89,9 @@ fun LoginScreen(
             is UserState.LoginOrSignupSucceeded -> {
                 val message = userState.message
                 currentUserState = message
+                LaunchedEffect(Unit) {
+                    onNavigateToMainMenu()
+                }
             }
             is UserState.LoginOrSignupFailed -> {
                 val message = userState.message
@@ -108,12 +108,6 @@ fun LoginScreen(
 
         if (currentUserState.isNotEmpty()) {
             Text(text = currentUserState)
-        }
-
-        if (getState().value is UserState.LoginOrSignupSucceeded) {
-            LaunchedEffect(Unit) {
-                onNavigateToMainMenu()
-            }
         }
     }
 }

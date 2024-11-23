@@ -1,5 +1,7 @@
 package com.example.supabasedemo
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -8,6 +10,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.NavHost
@@ -15,16 +19,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.supabasedemo.compose.screens.ChoiceScreen
+import com.example.supabasedemo.compose.screens.CreateGameScreen
 import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
-import com.example.supabasedemo.ui.theme.SupabaseDemoTheme
-import com.example.supabasedemo.ui.theme.Surface
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
+    private val CAMERA_PERMISSION_REQUEST_CODE = 101
+
     private val _userState = mutableStateOf<UserState>(UserState.InLoginChoice)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,10 +37,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AppTheme {
-                Surface() {
+                Surface {
                     Navigation()
                 }
-
             }
         }
     }
@@ -48,57 +52,66 @@ class MainActivity : ComponentActivity() {
             startDestination = LoginProcess
         ) {
             navigation<LoginProcess>(startDestination = LoginChoice) {
-                composable<LoginChoice> { ChoiceScreen(
-                    onNavigateToLogIn = {
-                        navController.navigate(route = Login)
-                    },
-                    onNavigateToSignUp = {
-                        navController.navigate(route = Signup)
-                    },
-                    getState = {
-                        return@ChoiceScreen _userState
-                    },
-                    setState = {
-                        setState(it)
-                    }
-                ) }
-                composable<Login> { LoginScreen(
-                    onNavigateToMainMenu = {
-                        navController.navigate(route = MainMenu)
-                        {
-                            popUpToTop(navController)
+                composable<LoginChoice> {
+                    ChoiceScreen(
+                        onNavigateToLogIn = {
+                            navController.navigate(route = Login)
+                        },
+                        onNavigateToSignUp = {
+                            navController.navigate(route = Signup)
+                        },
+                        getState = {
+                            return@ChoiceScreen _userState
+                        },
+                        setState = {
+                            setState(it)
                         }
-                    },
-                    getState = {
-                        return@LoginScreen _userState
-                    },
-                    setState = {
-                        setState(it)
-                    }
-                ) }
-                composable<Signup> { SignupScreen(
-                    onNavigateToChoice = {
-                        navController.navigate(route = LoginChoice) {
-                            popUpToTop(navController)
+                    )
+                }
+                composable<Login> {
+                    LoginScreen(
+                        onNavigateToMainMenu = {
+                            navController.navigate(route = MainMenu)
+                        },
+                        getState = {
+                            return@LoginScreen _userState
+                        },
+                        setState = {
+                            setState(it)
                         }
-                    },
-                    getState = {
-                        return@SignupScreen _userState
-                    },
-                    setState = {
-                        setState(it)
-                    }
-                ) }
+                    )
+                }
+                composable<Signup> {
+                    SignupScreen(
+                        onNavigateToLoginChoice = {
+                            navController.navigate(route = LoginChoice)
+                        },
+                        getState = {
+                            return@SignupScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
+                }
             }
             navigation<MainMenu>(startDestination = Menu) {
-                composable<Menu> { MainMenuScreen(
-                    getState = {
-                        return@MainMenuScreen _userState
-                    },
-                    setState = {
-                        setState(it)
-                    }
-                ) }
+                composable<Menu> {
+                    MainMenuScreen(
+                        onNavigateToLoginChoice = {
+                            navController.navigate(route = LoginChoice)
+                        },
+                        onNavigateToGame = {
+                            navController.navigate(route = Game)
+                        },
+                        getState = {
+                            return@MainMenuScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
+                }
                 composable<Stats> {
 
                 }
@@ -123,9 +136,16 @@ class MainActivity : ComponentActivity() {
 
                 }
             }
-            navigation<Game>(startDestination = GameChoice) {
-                composable<GameChoice> {
-
+            navigation<Game>(startDestination = GameStart) {
+                composable<GameStart> {
+                    CreateGameScreen(
+                        getState = {
+                            return@CreateGameScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
             }
         }
@@ -165,17 +185,30 @@ class MainActivity : ComponentActivity() {
     @Serializable
     object Game
     @Serializable
-    object GameChoice
+    object GameStart
     // endregion
 
     private fun NavOptionsBuilder.popUpToTop(navController: NavController) {
         popUpTo(navController.currentBackStackEntry?.destination?.route ?: return) {
-            inclusive =  true
+            inclusive = true
         }
     }
 
     private fun setState(state: UserState) {
         _userState.value = state
         Toast.makeText(this, _userState.value.toString(), Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.CAMERA),
+                CAMERA_PERMISSION_REQUEST_CODE
+            )
+        }
     }
 }
