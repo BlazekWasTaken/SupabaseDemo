@@ -76,4 +76,6 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.mlkit.vision)
+    implementation("com.google.guava:guava:31.0.1-android")
+    implementation("androidx.core.uwb:uwb:1.0.0-alpha09")
 }
