@@ -23,14 +23,17 @@ import com.example.supabasedemo.compose.screens.CreateGameScreen
 import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
+import com.example.supabasedemo.compose.screens.UwbScreen
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
-    private val CAMERA_PERMISSION_REQUEST_CODE = 101
+    private val permissionRequestCode = 101
 
     private val _userState = mutableStateOf<UserState>(UserState.InLoginChoice)
+    private val activity = this
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +62,9 @@ class MainActivity : ComponentActivity() {
                         },
                         onNavigateToSignUp = {
                             navController.navigate(route = Signup)
+                        },
+                        onNavigateToDemo = {
+                            navController.navigate(route = Demo)
                         },
                         getState = {
                             return@ChoiceScreen _userState
@@ -92,6 +98,17 @@ class MainActivity : ComponentActivity() {
                         setState = {
                             setState(it)
                         }
+                    )
+                }
+                composable<Demo> {
+                    UwbScreen(
+                        getState = {
+                            return@UwbScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        },
+                        activity
                     )
                 }
             }
@@ -130,9 +147,6 @@ class MainActivity : ComponentActivity() {
 
                 }
                 composable<Theme> {
-
-                }
-                composable<Demo> {
 
                 }
             }
@@ -202,14 +216,31 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
+
+        val permissions =
+            arrayOf(
+                Manifest.permission.CAMERA,
+                Manifest.permission.INTERNET,
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_ADMIN,
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_ADVERTISE,
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_WIFI_STATE,
+                Manifest.permission.CHANGE_WIFI_STATE,
+                Manifest.permission.UWB_RANGING,
+                Manifest.permission.NEARBY_WIFI_DEVICES
+            )
+
+        for (i in permissions.indices) {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(Manifest.permission.CAMERA),
-                CAMERA_PERMISSION_REQUEST_CODE
+                arrayOf(permissions[i]),
+                permissionRequestCode + i
             )
         }
+
+
     }
 }

@@ -19,6 +19,7 @@ import com.example.supabasedemo.ui.theme.MyOutlinedButton
 fun ChoiceScreen(
     onNavigateToLogIn: () -> Unit,
     onNavigateToSignUp: () -> Unit,
+    onNavigateToDemo: () -> Unit,
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit
 ) {
@@ -46,6 +47,13 @@ fun ChoiceScreen(
             }) {
             Text(text = "Sign Up")
         }
+        Spacer(modifier = Modifier.padding(8.dp))
+        MyOutlinedButton(
+            onClick = {
+                setState(UserState.InDemo)
+            }) {
+            Text(text = "Demo")
+        }
     }
 
     when (getState().value) {
@@ -58,6 +66,12 @@ fun ChoiceScreen(
         is UserState.InSignup -> {
             LaunchedEffect(Unit) {
                 onNavigateToSignUp()
+            }
+        }
+
+        is UserState.InDemo -> {
+            LaunchedEffect(Unit) {
+                onNavigateToDemo()
             }
         }
 
