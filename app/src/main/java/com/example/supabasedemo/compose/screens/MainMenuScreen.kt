@@ -21,6 +21,7 @@ import com.example.supabasedemo.ui.theme.MyOutlinedButton
 fun MainMenuScreen(
     onNavigateToLoginChoice: () -> Unit,
     onNavigateToGame: () -> Unit,
+    onNavigateToMinigame: () -> Unit,
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit
 ) {
@@ -71,6 +72,13 @@ fun MainMenuScreen(
             }) {
             Text(text = "How to play?")
         }
+        Spacer(modifier = Modifier.padding(8.dp))
+        MyOutlinedButton(
+            onClick = {
+                setState(UserState.InMinigame)
+            }) {
+            Text(text = "Play minigame")
+        }
     }
 
     val userState = getState().value
@@ -114,6 +122,12 @@ fun MainMenuScreen(
         is UserState.LogoutFailed -> {
             LaunchedEffect(Unit) {
                 setState(UserState.InMainMenu)
+            }
+        }
+
+        is UserState.InMinigame -> {
+            LaunchedEffect(Unit) {
+                onNavigateToMinigame()
             }
         }
 

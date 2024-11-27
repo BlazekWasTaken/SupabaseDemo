@@ -13,13 +13,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.supabasedemo.data.model.UserState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Job
+import kotlin.math.abs
+import kotlin.math.sqrt
+
 
 data class RedCircle(
     val id: Int,
@@ -35,7 +44,54 @@ fun MinigameScreen(
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        setState(UserState.InMinigame)
+    }
+
     var score by remember { mutableIntStateOf(0) }
+    var isMoving by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+    DisposableEffect(Unit) {
+        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+        val sensorEventListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                if (event != null) {
+                    val x = event.values[0]
+                    val y = event.values[1]
+                    val z = event.values[2]
+                    val acceleration = sqrt(x * x + y * y + z * z)
+                    val movementThreshold = 6.0f
+                    isMoving = acceleration > movementThreshold
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+            }
+        }
+        sensorManager.registerListener(
+            sensorEventListener,
+            linearAccelerationSensor,
+            SensorManager.SENSOR_DELAY_GAME
+        )
+        onDispose {
+            sensorManager.unregisterListener(sensorEventListener)
+        }
+    }
+
+
+    LaunchedEffect(isMoving) {
+        while (true) {
+            if (isMoving) {
+                if (score > 0) {
+                    score--
+                }
+            }
+            delay(1000)
+        }
+    }
 
     val circleSize = 50.dp
     val density = LocalDensity.current
@@ -191,7 +247,7 @@ fun MinigameScreen(
                         .offset(x = redOffsetXDp, y = redOffsetYDp)
                         .background(Color.Red, CircleShape)
                         .clickable {
-                            score++
+                            score--
                             redCircle.isVisible = false
                         }
                 )
@@ -199,3 +255,5 @@ fun MinigameScreen(
         }
     }
 }
+
+

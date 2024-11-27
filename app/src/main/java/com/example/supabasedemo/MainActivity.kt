@@ -22,6 +22,7 @@ import com.example.supabasedemo.compose.screens.ChoiceScreen
 import com.example.supabasedemo.compose.screens.CreateGameScreen
 import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
+import com.example.supabasedemo.compose.screens.MinigameScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
@@ -104,6 +105,9 @@ class MainActivity : ComponentActivity() {
                         onNavigateToGame = {
                             navController.navigate(route = Game)
                         },
+                        onNavigateToMinigame = {
+                            navController.navigate(route = Minigame)
+                        },
                         getState = {
                             return@MainMenuScreen _userState
                         },
@@ -141,6 +145,19 @@ class MainActivity : ComponentActivity() {
                     CreateGameScreen(
                         getState = {
                             return@CreateGameScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
+                }
+            }
+
+            navigation<Minigame>(startDestination = MinigameStart) {
+                composable<MinigameStart> {
+                    MinigameScreen (
+                        getState = {
+                            return@MinigameScreen _userState
                         },
                         setState = {
                             setState(it)
@@ -186,7 +203,11 @@ class MainActivity : ComponentActivity() {
     @Serializable
     object Game
     @Serializable
+    object Minigame
+    @Serializable
     object GameStart
+    @Serializable
+    object MinigameStart
     // endregion
 
     private fun NavOptionsBuilder.popUpToTop(navController: NavController) {
