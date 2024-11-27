@@ -104,8 +104,8 @@ fun CreateGameScreen(
                         scannedQRCode?.let { gameUuid ->
                             viewModel.supabaseDb.joinGameInSupabase(
                                 gameUuid,
-                                onGameJoined = {
-                                    gameDetails = it
+                                onGameJoined = { game ->
+                                    gameDetails = game
                                     Log.d("QRCodeScanner", "Joined game: $gameUuid")
                                 },
                                 onError = { errorMessage = it },
