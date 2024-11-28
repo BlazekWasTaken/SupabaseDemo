@@ -1,8 +1,13 @@
 package com.example.supabasedemo.ui.theme
 
+import android.graphics.drawable.shapes.Shape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -106,7 +111,13 @@ private val typography = Typography(
     labelSmall = Typography.labelSmall
 )
 
-private val shape = Shapes()
+val replyShapes = Shapes(
+    extraSmall = RoundedCornerShape(0),
+    small = RoundedCornerShape(0),
+    medium = RoundedCornerShape(0),
+    large = RoundedCornerShape(0),
+    extraLarge = RoundedCornerShape(0)
+)
 
 @Composable
 fun AppTheme(
@@ -119,7 +130,7 @@ fun AppTheme(
         colorScheme = colorScheme,
         typography = typography,
         content = content,
-        shapes = shape
+        shapes = replyShapes
     )
 }
 

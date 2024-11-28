@@ -23,6 +23,7 @@ import com.example.supabasedemo.compose.screens.CreateGameScreen
 import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
+import com.example.supabasedemo.compose.screens.TutorialScreen
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
 import kotlinx.serialization.Serializable
@@ -60,6 +61,13 @@ class MainActivity : ComponentActivity() {
                         onNavigateToSignUp = {
                             navController.navigate(route = Signup)
                         },
+                        onNavigateToMainMenu = {
+                            navController.navigate(route = MainMenu) {
+                                popUpTo(LoginChoice) {
+                                    inclusive = true
+                                }
+                            }
+                        },
                         getState = {
                             return@ChoiceScreen _userState
                         },
@@ -71,7 +79,11 @@ class MainActivity : ComponentActivity() {
                 composable<Login> {
                     LoginScreen(
                         onNavigateToMainMenu = {
-                            navController.navigate(route = MainMenu)
+                            navController.navigate(route = MainMenu) {
+                                popUpTo(MainMenu) {
+                                    inclusive = true
+                                }
+                            }
                         },
                         getState = {
                             return@LoginScreen _userState
@@ -84,7 +96,7 @@ class MainActivity : ComponentActivity() {
                 composable<Signup> {
                     SignupScreen(
                         onNavigateToLoginChoice = {
-                            navController.navigate(route = LoginChoice)
+                            navController.popBackStack()
                         },
                         getState = {
                             return@SignupScreen _userState
@@ -99,10 +111,21 @@ class MainActivity : ComponentActivity() {
                 composable<Menu> {
                     MainMenuScreen(
                         onNavigateToLoginChoice = {
-                            navController.navigate(route = LoginChoice)
+                            navController.navigate(route = LoginChoice) {
+                                popUpTo(Menu) {
+                                    inclusive = true
+                                }
+                            }
                         },
                         onNavigateToGame = {
-                            navController.navigate(route = Game)
+                            navController.navigate(route = Game) {
+                                popUpTo(Menu) {
+                                    inclusive = true
+                                }
+                            }
+                        },
+                        onNavigateToTutorial = {
+                            navController.navigate(route = Tutorial)
                         },
                         getState = {
                             return@MainMenuScreen _userState
@@ -116,7 +139,17 @@ class MainActivity : ComponentActivity() {
 
                 }
                 composable<Tutorial> {
-
+                    TutorialScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@TutorialScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
             }
             navigation<Settings>(startDestination = SettingsMenu) {
@@ -124,9 +157,6 @@ class MainActivity : ComponentActivity() {
 
                 }
                 composable<AccountInfo> {
-
-                }
-                composable<Sounds> {
 
                 }
                 composable<Theme> {
@@ -177,8 +207,6 @@ class MainActivity : ComponentActivity() {
     @Serializable
     object AccountInfo
     @Serializable
-    object Sounds
-    @Serializable
     object Theme
     @Serializable
     object Demo
@@ -188,12 +216,6 @@ class MainActivity : ComponentActivity() {
     @Serializable
     object GameStart
     // endregion
-
-    private fun NavOptionsBuilder.popUpToTop(navController: NavController) {
-        popUpTo(navController.currentBackStackEntry?.destination?.route ?: return) {
-            inclusive = true
-        }
-    }
 
     private fun setState(state: UserState) {
         _userState.value = state
