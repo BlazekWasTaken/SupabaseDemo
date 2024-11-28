@@ -121,10 +121,22 @@ val replyShapes = Shapes(
 
 @Composable
 fun AppTheme(
+    getThemeChoice: () -> ThemeChoice,
     isDarkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (isDarkTheme) darkColorScheme else lightColorScheme
+
+    val colorScheme: ColorScheme = when (getThemeChoice()) {
+        is ThemeChoice.Dark -> {
+            darkColorScheme
+        }
+        is ThemeChoice.Light -> {
+            lightColorScheme
+        }
+        is ThemeChoice.System -> {
+            if (isDarkTheme) darkColorScheme else lightColorScheme
+        }
+    }
 
     MaterialTheme(
         colorScheme = colorScheme,
@@ -132,6 +144,12 @@ fun AppTheme(
         content = content,
         shapes = replyShapes
     )
+}
+
+sealed class ThemeChoice {
+    data object Light: ThemeChoice()
+    data object Dark: ThemeChoice()
+    data object System: ThemeChoice()
 }
 
 @Composable

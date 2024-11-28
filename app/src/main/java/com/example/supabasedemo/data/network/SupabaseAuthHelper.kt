@@ -6,9 +6,11 @@ import com.example.supabasedemo.data.network.SupabaseClient.client
 import com.example.supabasedemo.utils.SharedPreferenceHelper
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.exceptions.RestException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -104,5 +106,11 @@ class SupabaseAuthHelper(
         val user = client.auth.currentUserOrNull()
         val metadata = user?.userMetadata
         return metadata
+    }
+
+    fun getCurrentUserInfo(): UserInfo {
+        return runBlocking {
+            return@runBlocking client.auth.retrieveUserForCurrentSession(false)
+        }
     }
 }

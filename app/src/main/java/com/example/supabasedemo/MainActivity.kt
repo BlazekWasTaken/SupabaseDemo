@@ -12,32 +12,44 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.example.supabasedemo.compose.screens.AccountInfoScreen
 import com.example.supabasedemo.compose.screens.ChoiceScreen
 import com.example.supabasedemo.compose.screens.CreateGameScreen
 import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
+import com.example.supabasedemo.compose.screens.SettingsScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
+import com.example.supabasedemo.compose.screens.StatsScreen
+import com.example.supabasedemo.compose.screens.ThemeScreen
 import com.example.supabasedemo.compose.screens.TutorialScreen
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
+import com.example.supabasedemo.ui.theme.ThemeChoice
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
     private val CAMERA_PERMISSION_REQUEST_CODE = 101
 
     private val _userState = mutableStateOf<UserState>(UserState.InLoginChoice)
+    private val _theme = mutableStateOf<ThemeChoice>(ThemeChoice.System)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppTheme {
+            AppTheme(
+                getThemeChoice = {
+                    return@AppTheme _theme.value
+                }
+            ) {
                 Surface {
                     Navigation()
                 }
@@ -127,6 +139,12 @@ class MainActivity : ComponentActivity() {
                         onNavigateToTutorial = {
                             navController.navigate(route = Tutorial)
                         },
+                        onNavigateToSettings = {
+                            navController.navigate(route = SettingsMenu)
+                        },
+                        onNavigateToStats = {
+                            navController.navigate(route = Stats)
+                        },
                         getState = {
                             return@MainMenuScreen _userState
                         },
@@ -136,7 +154,17 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 composable<Stats> {
-
+                    StatsScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@StatsScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<Tutorial> {
                     TutorialScreen(
@@ -154,13 +182,55 @@ class MainActivity : ComponentActivity() {
             }
             navigation<Settings>(startDestination = SettingsMenu) {
                 composable<SettingsMenu> {
-
+                    SettingsScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        onNavigateToAccountInfo = {
+                            navController.navigate(AccountInfo)
+                        },
+                        onNavigateToThemeChoice = {
+                            navController.navigate(Theme)
+                        },
+                        onNavigateToDemo = {
+                            navController.navigate(Demo)
+                        },
+                        getState = {
+                            return@SettingsScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<AccountInfo> {
-
+                    AccountInfoScreen(
+                        onNavigateToSettings = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@AccountInfoScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<Theme> {
-
+                    ThemeScreen(
+                        onNavigateToSettings = {
+                            navController.popBackStack()
+                        },
+                        setTheme = {
+                            _theme.value = it
+                        },
+                        getState = {
+                            return@ThemeScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<Demo> {
 
