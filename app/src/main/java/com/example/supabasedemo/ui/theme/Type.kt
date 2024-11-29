@@ -17,15 +17,15 @@ val Typography = Typography(
     titleLarge = TextStyle(
         fontFamily = Geo,
         fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
+        fontSize = 40.sp,
+        lineHeight = 44.sp,
         letterSpacing = 0.sp
     ),
     titleSmall = TextStyle(
         fontFamily = Geo,
         fontWeight = FontWeight.Normal,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
+        fontSize = 26.sp,
+        lineHeight = 30.sp,
         letterSpacing = 0.sp
     ),
     labelLarge = TextStyle(

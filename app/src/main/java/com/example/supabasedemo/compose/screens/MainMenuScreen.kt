@@ -21,6 +21,9 @@ import com.example.supabasedemo.ui.theme.MyOutlinedButton
 fun MainMenuScreen(
     onNavigateToLoginChoice: () -> Unit,
     onNavigateToGame: () -> Unit,
+    onNavigateToTutorial: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToStats: () -> Unit,
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit
 ) {
@@ -83,7 +86,7 @@ fun MainMenuScreen(
 
         is UserState.InSettings -> {
             LaunchedEffect(Unit) {
-                // go to settings
+                onNavigateToSettings()
             }
         }
 
@@ -95,13 +98,13 @@ fun MainMenuScreen(
 
         is UserState.InStats -> {
             LaunchedEffect(Unit) {
-                // go to stats
+                onNavigateToStats()
             }
         }
 
         is UserState.InTutorial -> {
             LaunchedEffect(Unit) {
-                // go to tutorial
+                onNavigateToTutorial()
             }
         }
 

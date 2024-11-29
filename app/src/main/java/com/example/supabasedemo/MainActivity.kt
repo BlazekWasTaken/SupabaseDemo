@@ -12,20 +12,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.example.supabasedemo.compose.screens.AccountInfoScreen
 import com.example.supabasedemo.compose.screens.ChoiceScreen
 import com.example.supabasedemo.compose.screens.CreateGameScreen
 import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
+import com.example.supabasedemo.compose.screens.SettingsScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
+import com.example.supabasedemo.compose.screens.StatsScreen
+import com.example.supabasedemo.compose.screens.ThemeScreen
+import com.example.supabasedemo.compose.screens.TutorialScreen
 import com.example.supabasedemo.compose.screens.UwbScreen
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
+import com.example.supabasedemo.ui.theme.ThemeChoice
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 
@@ -33,13 +40,19 @@ class MainActivity : ComponentActivity() {
     private val permissionRequestCode = 101
 
     private val _userState = mutableStateOf<UserState>(UserState.InLoginChoice)
+    private val _theme = mutableStateOf<ThemeChoice>(ThemeChoice.System)
     private val activity = this
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppTheme {
+            AppTheme(
+                getThemeChoice = {
+                    return@AppTheme _theme.value
+                }
+            ) {
                 Surface {
                     Navigation()
                 }
@@ -63,8 +76,12 @@ class MainActivity : ComponentActivity() {
                         onNavigateToSignUp = {
                             navController.navigate(route = Signup)
                         },
-                        onNavigateToDemo = {
-                            navController.navigate(route = Demo)
+                        onNavigateToMainMenu = {
+                            navController.navigate(route = MainMenu) {
+                                popUpTo(LoginChoice) {
+                                    inclusive = true
+                                }
+                            }
                         },
                         getState = {
                             return@ChoiceScreen _userState
@@ -77,7 +94,11 @@ class MainActivity : ComponentActivity() {
                 composable<Login> {
                     LoginScreen(
                         onNavigateToMainMenu = {
-                            navController.navigate(route = MainMenu)
+                            navController.navigate(route = MainMenu) {
+                                popUpTo(MainMenu) {
+                                    inclusive = true
+                                }
+                            }
                         },
                         getState = {
                             return@LoginScreen _userState
@@ -90,7 +111,7 @@ class MainActivity : ComponentActivity() {
                 composable<Signup> {
                     SignupScreen(
                         onNavigateToLoginChoice = {
-                            navController.navigate(route = LoginChoice)
+                            navController.popBackStack()
                         },
                         getState = {
                             return@SignupScreen _userState
@@ -116,10 +137,27 @@ class MainActivity : ComponentActivity() {
                 composable<Menu> {
                     MainMenuScreen(
                         onNavigateToLoginChoice = {
-                            navController.navigate(route = LoginChoice)
+                            navController.navigate(route = LoginChoice) {
+                                popUpTo(Menu) {
+                                    inclusive = true
+                                }
+                            }
                         },
                         onNavigateToGame = {
-                            navController.navigate(route = Game)
+                            navController.navigate(route = Game) {
+                                popUpTo(Menu) {
+                                    inclusive = true
+                                }
+                            }
+                        },
+                        onNavigateToTutorial = {
+                            navController.navigate(route = Tutorial)
+                        },
+                        onNavigateToSettings = {
+                            navController.navigate(route = SettingsMenu)
+                        },
+                        onNavigateToStats = {
+                            navController.navigate(route = Stats)
                         },
                         getState = {
                             return@MainMenuScreen _userState
@@ -130,23 +168,85 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 composable<Stats> {
-
+                    StatsScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@StatsScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<Tutorial> {
-
+                    TutorialScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@TutorialScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
             }
             navigation<Settings>(startDestination = SettingsMenu) {
                 composable<SettingsMenu> {
-
+                    SettingsScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        onNavigateToAccountInfo = {
+                            navController.navigate(AccountInfo)
+                        },
+                        onNavigateToThemeChoice = {
+                            navController.navigate(Theme)
+                        },
+                        onNavigateToDemo = {
+                            navController.navigate(Demo)
+                        },
+                        getState = {
+                            return@SettingsScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<AccountInfo> {
-
-                }
-                composable<Sounds> {
-
+                    AccountInfoScreen(
+                        onNavigateToSettings = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@AccountInfoScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<Theme> {
+                    ThemeScreen(
+                        onNavigateToSettings = {
+                            navController.popBackStack()
+                        },
+                        setTheme = {
+                            _theme.value = it
+                        },
+                        getState = {
+                            return@ThemeScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
+                }
+                composable<Demo> {
 
                 }
             }
@@ -191,8 +291,6 @@ class MainActivity : ComponentActivity() {
     @Serializable
     object AccountInfo
     @Serializable
-    object Sounds
-    @Serializable
     object Theme
     @Serializable
     object Demo
@@ -203,12 +301,6 @@ class MainActivity : ComponentActivity() {
     object GameStart
     // endregion
 
-    private fun NavOptionsBuilder.popUpToTop(navController: NavController) {
-        popUpTo(navController.currentBackStackEntry?.destination?.route ?: return) {
-            inclusive = true
-        }
-    }
-
     private fun setState(state: UserState) {
         _userState.value = state
         Toast.makeText(this, _userState.value.toString(), Toast.LENGTH_SHORT).show()
@@ -216,31 +308,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-
-        val permissions =
-            arrayOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.INTERNET,
-                Manifest.permission.BLUETOOTH,
-                Manifest.permission.BLUETOOTH_ADMIN,
-                Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_ADVERTISE,
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_WIFI_STATE,
-                Manifest.permission.CHANGE_WIFI_STATE,
-                Manifest.permission.UWB_RANGING,
-                Manifest.permission.NEARBY_WIFI_DEVICES
-            )
-
-        for (i in permissions.indices) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(permissions[i]),
-                permissionRequestCode + i
+                arrayOf(Manifest.permission.CAMERA),
+                CAMERA_PERMISSION_REQUEST_CODE
             )
         }
-
-
     }
 }
