@@ -12,32 +12,53 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.example.supabasedemo.compose.screens.AccountInfoScreen
 import com.example.supabasedemo.compose.screens.ChoiceScreen
 import com.example.supabasedemo.compose.screens.CreateGameScreen
 import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
+import com.example.supabasedemo.compose.screens.SettingsScreen
 import com.example.supabasedemo.compose.screens.MinigameScreen
+import com.example.supabasedemo.compose.screens.SettingsScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
+import com.example.supabasedemo.compose.screens.StatsScreen
+import com.example.supabasedemo.compose.screens.ThemeScreen
+import com.example.supabasedemo.compose.screens.TutorialScreen
+import com.example.supabasedemo.compose.screens.StatsScreen
+import com.example.supabasedemo.compose.screens.ThemeScreen
+import com.example.supabasedemo.compose.screens.TutorialScreen
+import com.example.supabasedemo.compose.screens.MinigameScreen
+import com.example.supabasedemo.compose.screens.UwbScreen
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
+import com.example.supabasedemo.ui.theme.ThemeChoice
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
-    private val CAMERA_PERMISSION_REQUEST_CODE = 101
+    private val permissionRequestCode = 101
 
     private val _userState = mutableStateOf<UserState>(UserState.InLoginChoice)
+    private val _theme = mutableStateOf<ThemeChoice>(ThemeChoice.System)
+    private val activity = this
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppTheme {
+            AppTheme(
+                getThemeChoice = {
+                    return@AppTheme _theme.value
+                }
+            ) {
                 Surface {
                     Navigation()
                 }
@@ -61,6 +82,13 @@ class MainActivity : ComponentActivity() {
                         onNavigateToSignUp = {
                             navController.navigate(route = Signup)
                         },
+                        onNavigateToMainMenu = {
+                            navController.navigate(route = MainMenu) {
+                                popUpTo(LoginChoice) {
+                                    inclusive = true
+                                }
+                            }
+                        },
                         getState = {
                             return@ChoiceScreen _userState
                         },
@@ -72,7 +100,11 @@ class MainActivity : ComponentActivity() {
                 composable<Login> {
                     LoginScreen(
                         onNavigateToMainMenu = {
-                            navController.navigate(route = MainMenu)
+                            navController.navigate(route = MainMenu) {
+                                popUpTo(MainMenu) {
+                                    inclusive = true
+                                }
+                            }
                         },
                         getState = {
                             return@LoginScreen _userState
@@ -85,7 +117,7 @@ class MainActivity : ComponentActivity() {
                 composable<Signup> {
                     SignupScreen(
                         onNavigateToLoginChoice = {
-                            navController.navigate(route = LoginChoice)
+                            navController.popBackStack()
                         },
                         getState = {
                             return@SignupScreen _userState
@@ -100,13 +132,30 @@ class MainActivity : ComponentActivity() {
                 composable<Menu> {
                     MainMenuScreen(
                         onNavigateToLoginChoice = {
-                            navController.navigate(route = LoginChoice)
+                            navController.navigate(route = LoginChoice) {
+                                popUpTo(Menu) {
+                                    inclusive = true
+                                }
+                            }
                         },
                         onNavigateToGame = {
-                            navController.navigate(route = Game)
+                            navController.navigate(route = Game) {
+                                popUpTo(Menu) {
+                                    inclusive = true
+                                }
+                            }
                         },
-                        onNavigateToMinigame = {
-                            navController.navigate(route = Minigame)
+                        onNavigateToTutorial = {
+                            navController.navigate(route = Tutorial)
+                        },
+                        onNavigateToSettings = {
+                            navController.navigate(route = SettingsMenu)
+                        },
+                        onNavigateToStats = {
+                            navController.navigate(route = Stats)
+                        },
+                        onNavigateToMiniGame = {
+                            navController.navigate(route = MiniGame)
                         },
                         getState = {
                             return@MainMenuScreen _userState
@@ -117,27 +166,110 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 composable<Stats> {
-
+                    StatsScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@StatsScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<Tutorial> {
+                    TutorialScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@TutorialScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
+                }
+                composable<MiniGame> {
+                    MinigameScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                        return@MinigameScreen _userState
+                                   },
+                        setState = {
+                            setState(it)
+                        })
 
                 }
             }
             navigation<Settings>(startDestination = SettingsMenu) {
                 composable<SettingsMenu> {
-
+                    SettingsScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        onNavigateToAccountInfo = {
+                            navController.navigate(AccountInfo)
+                        },
+                        onNavigateToThemeChoice = {
+                            navController.navigate(Theme)
+                        },
+                        onNavigateToDemo = {
+                            navController.navigate(Demo)
+                        },
+                        getState = {
+                            return@SettingsScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<AccountInfo> {
-
-                }
-                composable<Sounds> {
-
+                    AccountInfoScreen(
+                        onNavigateToSettings = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@AccountInfoScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<Theme> {
-
+                    ThemeScreen(
+                        onNavigateToSettings = {
+                            navController.popBackStack()
+                        },
+                        setTheme = {
+                            _theme.value = it
+                        },
+                        getState = {
+                            return@ThemeScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        }
+                    )
                 }
                 composable<Demo> {
-
+                    UwbScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@UwbScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        },
+                        activity
+                    )
                 }
             }
             navigation<Game>(startDestination = GameStart) {
@@ -145,19 +277,6 @@ class MainActivity : ComponentActivity() {
                     CreateGameScreen(
                         getState = {
                             return@CreateGameScreen _userState
-                        },
-                        setState = {
-                            setState(it)
-                        }
-                    )
-                }
-            }
-
-            navigation<Minigame>(startDestination = MinigameStart) {
-                composable<MinigameStart> {
-                    MinigameScreen (
-                        getState = {
-                            return@MinigameScreen _userState
                         },
                         setState = {
                             setState(it)
@@ -186,6 +305,8 @@ class MainActivity : ComponentActivity() {
     object Stats
     @Serializable
     object Tutorial
+    @Serializable
+    object MiniGame
 
     @Serializable
     object Settings
@@ -194,8 +315,6 @@ class MainActivity : ComponentActivity() {
     @Serializable
     object AccountInfo
     @Serializable
-    object Sounds
-    @Serializable
     object Theme
     @Serializable
     object Demo
@@ -203,18 +322,8 @@ class MainActivity : ComponentActivity() {
     @Serializable
     object Game
     @Serializable
-    object Minigame
-    @Serializable
     object GameStart
-    @Serializable
-    object MinigameStart
     // endregion
-
-    private fun NavOptionsBuilder.popUpToTop(navController: NavController) {
-        popUpTo(navController.currentBackStackEntry?.destination?.route ?: return) {
-            inclusive = true
-        }
-    }
 
     private fun setState(state: UserState) {
         _userState.value = state
@@ -229,7 +338,7 @@ class MainActivity : ComponentActivity() {
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.CAMERA),
-                CAMERA_PERMISSION_REQUEST_CODE
+                permissionRequestCode
             )
         }
     }

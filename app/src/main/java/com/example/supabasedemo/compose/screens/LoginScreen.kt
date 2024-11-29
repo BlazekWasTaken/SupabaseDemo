@@ -1,5 +1,6 @@
 package com.example.supabasedemo.compose.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,11 +21,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import com.example.supabasedemo.compose.viewModels.MainViewModel
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.MyOutlinedButton
 import com.example.supabasedemo.ui.theme.MyOutlinedTextField
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun LoginScreen(
     onNavigateToMainMenu: () -> Unit,
@@ -39,7 +44,6 @@ fun LoginScreen(
 
     LaunchedEffect(Unit) {
         setState(UserState.InLogin)
-        viewModel.supabaseAuth.isUserLoggedIn()
     }
 
     Column(
@@ -80,8 +84,7 @@ fun LoginScreen(
             Text(text = "Log in")
         }
 
-        val userState = getState().value
-        when (userState) {
+        when (val userState = getState().value) {
             is UserState.LoginOrSignupLoading -> {
                 currentUserState = "Loading..."
             }
@@ -95,11 +98,6 @@ fun LoginScreen(
             }
 
             is UserState.LoginOrSignupFailed -> {
-                val message = userState.message
-                currentUserState = message
-            }
-
-            is UserState.CheckedLoginStatusSucceeded -> {
                 val message = userState.message
                 currentUserState = message
             }

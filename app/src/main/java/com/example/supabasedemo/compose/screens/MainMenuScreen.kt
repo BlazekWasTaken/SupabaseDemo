@@ -21,7 +21,10 @@ import com.example.supabasedemo.ui.theme.MyOutlinedButton
 fun MainMenuScreen(
     onNavigateToLoginChoice: () -> Unit,
     onNavigateToGame: () -> Unit,
-    onNavigateToMinigame: () -> Unit,
+    onNavigateToTutorial: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToStats: () -> Unit,
+    onNavigateToMiniGame: () -> Unit,
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit
 ) {
@@ -75,9 +78,9 @@ fun MainMenuScreen(
         Spacer(modifier = Modifier.padding(8.dp))
         MyOutlinedButton(
             onClick = {
-                setState(UserState.InMinigame)
+                setState(UserState.InMiniGame)
             }) {
-            Text(text = "Play minigame")
+            Text(text = "Mini-game")
         }
     }
 
@@ -91,7 +94,7 @@ fun MainMenuScreen(
 
         is UserState.InSettings -> {
             LaunchedEffect(Unit) {
-                // go to settings
+                onNavigateToSettings()
             }
         }
 
@@ -103,13 +106,13 @@ fun MainMenuScreen(
 
         is UserState.InStats -> {
             LaunchedEffect(Unit) {
-                // go to stats
+                onNavigateToStats()
             }
         }
 
         is UserState.InTutorial -> {
             LaunchedEffect(Unit) {
-                // go to tutorial
+                onNavigateToTutorial()
             }
         }
 
@@ -125,9 +128,9 @@ fun MainMenuScreen(
             }
         }
 
-        is UserState.InMinigame -> {
+        is UserState.InMiniGame -> {
             LaunchedEffect(Unit) {
-                onNavigateToMinigame()
+                onNavigateToMiniGame()
             }
         }
 
