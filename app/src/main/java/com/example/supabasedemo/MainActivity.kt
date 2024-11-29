@@ -127,17 +127,6 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
-                composable<Demo> {
-                    UwbScreen(
-                        getState = {
-                            return@UwbScreen _userState
-                        },
-                        setState = {
-                            setState(it)
-                        },
-                        activity
-                    )
-                }
             }
             navigation<MainMenu>(startDestination = Menu) {
                 composable<Menu> {
@@ -269,7 +258,18 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 composable<Demo> {
-
+                    UwbScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                            return@UwbScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        },
+                        activity
+                    )
                 }
             }
             navigation<Game>(startDestination = GameStart) {

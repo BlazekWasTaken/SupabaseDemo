@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,10 +62,15 @@ import kotlin.math.sqrt
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun UwbScreen(
+    onNavigateToMainMenu: () -> Unit,
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit,
     activity: Activity
 ) {
+    LaunchedEffect(Unit) {
+        setState(UserState.InDemo)
+    }
+
     val context = LocalContext.current
     val viewModel = MainViewModel(context, setState = { setState(it) })
 
@@ -287,6 +293,19 @@ fun UwbScreen(
             Spacer(modifier = Modifier.padding(8.dp))
             RotationView(context)
         }
+    }
+    BackHandler {
+        setState(UserState.InMainMenu)
+    }
+
+    val userState = getState().value
+    when (userState) {
+        is UserState.InMainMenu -> {
+            LaunchedEffect(Unit) {
+                onNavigateToMainMenu()
+            }
+        }
+        else -> {}
     }
 }
 
