@@ -5,18 +5,21 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.util.Log
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,8 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -39,18 +40,21 @@ import androidx.core.uwb.UwbControleeSessionScope
 import androidx.core.uwb.UwbControllerSessionScope
 import androidx.core.uwb.UwbDevice
 import androidx.core.uwb.UwbManager
-import androidx.lifecycle.viewModelScope
 import com.example.supabasedemo.compose.viewModels.MainViewModel
+import com.example.supabasedemo.compose.views.AccelerometerView
+import com.example.supabasedemo.compose.views.GyroscopeView
+import com.example.supabasedemo.compose.views.RotationView
+import com.example.supabasedemo.compose.views.UwbDataView
 import com.example.supabasedemo.data.model.UserState
+import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.MyOutlinedButton
 import com.example.supabasedemo.ui.theme.MyOutlinedTextField
 import com.google.common.primitives.Shorts
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import java.util.Locale
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -64,7 +68,7 @@ fun UwbScreen(
     val context = LocalContext.current
     val viewModel = MainViewModel(context, setState = { setState(it) })
 
-    var uwbManager = UwbManager.createInstance(context)
+    val uwbManager = UwbManager.createInstance(context)
     var clientSessionScope: UwbClientSessionScope? by remember { mutableStateOf(null) }
 
     var isController by remember { mutableStateOf(true) }
@@ -72,26 +76,35 @@ fun UwbScreen(
     var address by remember { mutableStateOf("") }
     var preamble by remember { mutableStateOf("") }
 
-    var distance by remember { mutableFloatStateOf(-1F) }
-    var azimuth by remember { mutableFloatStateOf(-1F) }
-    var elevation by remember { mutableFloatStateOf(-1F) }
+    var distance by remember { mutableDoubleStateOf(-1.0) }
+    var azimuth by remember { mutableDoubleStateOf(-1.0) }
 
-    var distances = remember { mutableStateListOf<Float>() }
-    var azimuths = remember { mutableStateListOf<Float>() }
-    var elevations = remember { mutableStateListOf<Float>() }
+    val distances = remember { mutableStateListOf<Float>() }
+    val azimuths = remember { mutableStateListOf<Float>() }
 
-    val permissionGranted = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.UWB_RANGING
-    ) == PackageManager.PERMISSION_GRANTED
+    var permissionGranted by remember { mutableStateOf(false) }
 
-    if (!permissionGranted) {
-        LaunchedEffect(context) {
+    LaunchedEffect(Unit) {
+         permissionGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.UWB_RANGING
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!permissionGranted) {
             ActivityCompat.requestPermissions(
                 context as Activity,
-                arrayOf(Manifest.permission.CAMERA),
+                arrayOf(Manifest.permission.UWB_RANGING),
                 101
             )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.Main.immediate).launch {
+            clientSessionScope = if (isController) {
+                uwbManager.controllerSessionScope()
+            } else {
+                uwbManager.controleeSessionScope()
+            }
         }
     }
 
@@ -102,54 +115,39 @@ fun UwbScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        MyOutlinedButton(
-            onClick = {
-                isController = true
-                isStarted = false
-                clientSessionScope = null
-                CoroutineScope(Dispatchers.Main.immediate).launch {
-                    clientSessionScope = uwbManager.controllerSessionScope()
-                }
-            }) {
-            Text(text = "Set controller")
-        }
-        Spacer(modifier = Modifier.padding(8.dp))
-        MyOutlinedButton(
-            onClick = {
-                isController = false
-                isStarted = false
-                clientSessionScope = null
-                CoroutineScope(Dispatchers.Main.immediate).launch {
-                    clientSessionScope = uwbManager.controleeSessionScope()
-                }
-            }) {
-            Text(text = "Set controlee")
-        }
-        Spacer(modifier = Modifier.padding(8.dp))
-        MyOutlinedTextField(
-            value = address,
-            placeholder = {
-                Text(text = "Enter address")
-            },
-            onValueChange = {
-                address = it
-            }
-        )
-
-        if (!isController) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(text = "Controller:")
             Spacer(modifier = Modifier.padding(8.dp))
-            MyOutlinedTextField(
-                value = preamble,
-                placeholder = {
-                    Text(text = "Enter preamble")
-                },
-                onValueChange = {
-                    preamble = it
+            Switch(
+                checked = isController,
+                onCheckedChange = {
+                    isController = it
+                    isStarted = false
+                    clientSessionScope = null
+                    CoroutineScope(Dispatchers.Main.immediate).launch {
+                        clientSessionScope = if (isController) {
+                            uwbManager.controllerSessionScope()
+                        } else {
+                            uwbManager.controleeSessionScope()
+                        }
+                    }
                 }
             )
         }
-
         if (clientSessionScope != null) {
+            Spacer(modifier = Modifier.padding(8.dp))
+            MyOutlinedTextField(
+                value = address,
+                placeholder = {
+                    Text(text = "Enter address")
+                },
+                onValueChange = {
+                    address = it
+                }
+            )
             if (isController) {
                 val controller = clientSessionScope as UwbControllerSessionScope
                 val content = "address: ${Shorts.fromByteArray(controller.localAddress.address)} \n" +
@@ -158,20 +156,29 @@ fun UwbScreen(
                 Text(text = content)
             }
             else {
+                Spacer(modifier = Modifier.padding(8.dp))
+                MyOutlinedTextField(
+                    value = preamble,
+                    placeholder = {
+                        Text(text = "Enter preamble")
+                    },
+                    onValueChange = {
+                        preamble = it
+                    }
+                )
                 val controller = clientSessionScope as UwbControleeSessionScope
                 val content = "address: ${Shorts.fromByteArray(controller.localAddress.address)}"
                 Spacer(modifier = Modifier.padding(8.dp))
                 Text(text = content)
             }
-
             if (!isStarted) {
                 Spacer(modifier = Modifier.padding(8.dp))
                 MyOutlinedButton(
                     onClick = {
-                        val partnerAddress: UwbAddress = UwbAddress(Shorts.toByteArray(address.toShort()))
-                        var uwbComplexChannel: UwbComplexChannel? = null
+                        val partnerAddress = UwbAddress(Shorts.toByteArray(address.toShort()))
+                        val uwbComplexChannel: UwbComplexChannel?
 
-                        var sessionScope: UwbClientSessionScope? = null
+                        val sessionScope: UwbClientSessionScope?
                         if (isController) {
                             sessionScope = (clientSessionScope as UwbControllerSessionScope)
                             uwbComplexChannel = sessionScope.uwbComplexChannel
@@ -180,8 +187,7 @@ fun UwbScreen(
                             sessionScope = (clientSessionScope as UwbControleeSessionScope)
                             uwbComplexChannel = UwbComplexChannel(9, preamble.toInt())
                         }
-
-                        val rangingParameters: RangingParameters = RangingParameters(
+                        val rangingParameters = RangingParameters(
                             uwbConfigType = RangingParameters.CONFIG_UNICAST_DS_TWR,
                             sessionId = 12345,
                             subSessionId = 0,
@@ -191,7 +197,6 @@ fun UwbScreen(
                             peerDevices = listOf(UwbDevice(partnerAddress)),
                             updateRateType = RangingParameters.RANGING_UPDATE_RATE_AUTOMATIC
                         )
-
                         val sessionFlow = sessionScope.prepareSession(rangingParameters)
 
                         isStarted = true
@@ -200,7 +205,7 @@ fun UwbScreen(
                                 sessionFlow.collect {
                                     when(it) {
                                         is RangingResultPosition -> {
-                                            var distCalc = -1F
+                                            var distCalc = -1.0
                                             if (distances.count() < 20) {
                                                 distances.add(it.position.distance?.value ?: -1F)
                                             }
@@ -208,10 +213,14 @@ fun UwbScreen(
                                                 distances.removeAt(0)
                                                 distances.add(it.position.distance?.value ?: -1F)
 
-                                                distCalc = distances.subList(5, 14).average().toFloat()
-                                            }
+                                                val avg = distances.average()
+                                                val stDev = distances.stDev()
 
-                                            var azCalc = -1F
+                                                distCalc = distances.between(
+                                                    avg - stDev,
+                                                    avg + stDev).average()
+                                            }
+                                            var azCalc = -1.0
                                             if (azimuths.count() < 20) {
                                                 azimuths.add(it.position.azimuth?.value ?: -1F)
                                             }
@@ -219,24 +228,15 @@ fun UwbScreen(
                                                 azimuths.removeAt(0)
                                                 azimuths.add(it.position.azimuth?.value ?: -1F)
 
-                                                azCalc = azimuths.subList(5, 14).average().toFloat()
-                                            }
+                                                val avg = azimuths.average()
+                                                val stDev = azimuths.stDev()
 
-                                            var elCalc = -1F
-                                            if (elevations.count() < 20) {
-                                                elevations.add(it.position.elevation?.value ?: -1F)
+                                                azCalc = azimuths.between(
+                                                    avg - stDev,
+                                                    avg + stDev).average()
                                             }
-                                            else if (elevations.count() == 20) {
-                                                elevations.removeAt(0)
-                                                elevations.add(it.position.elevation?.value ?: -1F)
-
-                                                elCalc = elevations.average().toFloat()
-                                            }
-
                                             distance = distCalc
                                             azimuth = azCalc
-                                            elevation = elCalc
-                                            Log.e("uwb", "dist: $distance az: $azimuth el: $elevation")
                                         }
                                         is RangingResultPeerDisconnected -> {
                                             clientSessionScope = if (isController) {
@@ -260,20 +260,38 @@ fun UwbScreen(
                     Text(text = "Start")
                 }
             }
-
         }
 
         Spacer(modifier = Modifier.padding(8.dp))
-        Text(text = "distance: $distance")
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            UwbDataView(
+                getDistance = {
+                    return@UwbDataView distance
+                },
+                getAzimuth = {
+                    return@UwbDataView azimuth
+                }
+            )
+            Spacer(modifier = Modifier.padding(8.dp))
+            GyroscopeView(context)
+        }
         Spacer(modifier = Modifier.padding(8.dp))
-        Text(text = "azimuth: $azimuth")
-        Spacer(modifier = Modifier.padding(8.dp))
-        Text(text = "elevation: $elevation")
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            AccelerometerView(context)
+            Spacer(modifier = Modifier.padding(8.dp))
+            RotationView(context)
+        }
     }
 }
 
-fun List<Double>.stDev(): Double {
-    var result: Double = 0.0
+fun List<Float>.stDev(): Double {
+    var result = 0.0
     for (value in this) {
         result += (value - this.average()).pow(2)
     }
@@ -282,10 +300,10 @@ fun List<Double>.stDev(): Double {
     return result
 }
 
-fun List<Double>.between(lowInclusive: Double, highInclusive: Double): List<Double> {
-    var result: ArrayList<Double> = ArrayList<Double>()
+fun List<Float>.between(lowInclusive: Double, highInclusive: Double): List<Double> {
+    val result: ArrayList<Double> = ArrayList()
     for (value in this) {
-        if (value >= lowInclusive && value <= highInclusive) result.add(value)
+        if (value in lowInclusive..highInclusive) result.add(value.toDouble())
     }
     return result
 }
