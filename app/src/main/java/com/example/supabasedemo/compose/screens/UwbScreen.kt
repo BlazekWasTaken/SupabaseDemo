@@ -64,8 +64,7 @@ import kotlin.math.sqrt
 fun UwbScreen(
     onNavigateToMainMenu: () -> Unit,
     getState: () -> MutableState<UserState>,
-    setState: (state: UserState) -> Unit,
-    activity: Activity
+    setState: (state: UserState) -> Unit
 ) {
     LaunchedEffect(Unit) {
         setState(UserState.InDemo)

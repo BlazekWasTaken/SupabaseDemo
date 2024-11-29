@@ -1,5 +1,6 @@
 package com.example.supabasedemo.compose.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -56,6 +57,7 @@ fun ChoiceScreen(
         is UserState.CheckedLoginStatusSucceeded -> {
             if (state.message == "User already logged in!") {
                 shouldCompose = false
+                Toast.makeText(LocalContext.current, "You are already logged in", Toast.LENGTH_SHORT)
                 LaunchedEffect(Unit) {
                     onNavigateToMainMenu()
                 }

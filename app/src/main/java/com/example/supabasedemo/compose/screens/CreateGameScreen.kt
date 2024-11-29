@@ -46,9 +46,22 @@ fun CreateGameScreen(
     var gameDetails by remember { mutableStateOf<Game?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    var gameSubscription by remember { mutableStateOf<Game?>(null) }
+
     LaunchedEffect(Unit) {
         setState(UserState.InGameCreation)
         viewModel.supabaseAuth.isUserLoggedIn()
+    }
+
+    if (gameDetails != null) {
+        LaunchedEffect(Unit) {
+            viewModel.supabaseRealtime.subscribeToGame(
+                uuid = gameDetails!!.uuid,
+                setSubscribedObject = {
+                    gameSubscription = it
+                }
+            )
+        }
     }
 
     Column(
@@ -58,10 +71,29 @@ fun CreateGameScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        if (gameSubscription != null) {
+            Text(text = gameSubscription!!.uuid)
+            if (gameSubscription!!.user1 != null) {
+                Text(text = gameSubscription!!.user1!!)
+            }
+            else {
+                Text(text = "no user 1")
+            }
+            if (gameSubscription!!.user2 != null) {
+                Text(text = gameSubscription!!.user2!!)
+            }
+            else {
+                Text(text = "no user 2")
+            }
+        }
+        else {
+            Text(text = "subscription not working now")
+        }
+        Spacer(modifier = Modifier.padding(16.dp))
         MyOutlinedButton(
             onClick = {
                 val gameUuid = UUID.randomUUID().toString()
-                viewModel.supabaseDb.createGameInSupabase(
+                gameDetails = viewModel.supabaseDb.createGameInSupabase(
                     gameUuid,
                     onGameCreated = {
                         qrCodeBitmap = generateQRCode(gameUuid) ?: run {

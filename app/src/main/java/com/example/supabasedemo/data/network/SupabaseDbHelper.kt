@@ -8,7 +8,6 @@ import com.example.supabasedemo.data.network.SupabaseClient.client
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -53,13 +52,13 @@ class SupabaseDbHelper(
         onGameCreated: (Game) -> Unit,
         onError: (String) -> Unit,
         currentUser: JsonObject?
-    ) {
+    ): Game {
         val gameData = Game(
             uuid = gameUuid,
             user1 = currentUser?.get("sub").toString().trim().replace("\"", ""),
         )
 
-        scope.launch {
+        runBlocking {
             try {
                 val createdGame = client.from("games")
                     .insert(gameData) {
@@ -74,5 +73,7 @@ class SupabaseDbHelper(
                 }
             }
         }
+
+        return gameData
     }
 }

@@ -3,7 +3,6 @@ package com.example.supabasedemo
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -13,8 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.navigation.NavController
-import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -26,20 +23,14 @@ import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
 import com.example.supabasedemo.compose.screens.SettingsScreen
 import com.example.supabasedemo.compose.screens.MinigameScreen
-import com.example.supabasedemo.compose.screens.SettingsScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
 import com.example.supabasedemo.compose.screens.StatsScreen
 import com.example.supabasedemo.compose.screens.ThemeScreen
 import com.example.supabasedemo.compose.screens.TutorialScreen
-import com.example.supabasedemo.compose.screens.StatsScreen
-import com.example.supabasedemo.compose.screens.ThemeScreen
-import com.example.supabasedemo.compose.screens.TutorialScreen
-import com.example.supabasedemo.compose.screens.MinigameScreen
 import com.example.supabasedemo.compose.screens.UwbScreen
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.ThemeChoice
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
@@ -47,7 +38,6 @@ class MainActivity : ComponentActivity() {
 
     private val _userState = mutableStateOf<UserState>(UserState.InLoginChoice)
     private val _theme = mutableStateOf<ThemeChoice>(ThemeChoice.System)
-    private val activity = this
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -149,7 +139,7 @@ class MainActivity : ComponentActivity() {
                             navController.navigate(route = Tutorial)
                         },
                         onNavigateToSettings = {
-                            navController.navigate(route = SettingsMenu)
+                            navController.navigate(route = Settings)
                         },
                         onNavigateToStats = {
                             navController.navigate(route = Stats)
@@ -268,7 +258,6 @@ class MainActivity : ComponentActivity() {
                         setState = {
                             setState(it)
                         },
-                        activity
                     )
                 }
             }
@@ -327,7 +316,7 @@ class MainActivity : ComponentActivity() {
 
     private fun setState(state: UserState) {
         _userState.value = state
-        Toast.makeText(this, _userState.value.toString(), Toast.LENGTH_SHORT).show()
+//        Toast.makeText(this, _userState.value.toString(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onStart() {
