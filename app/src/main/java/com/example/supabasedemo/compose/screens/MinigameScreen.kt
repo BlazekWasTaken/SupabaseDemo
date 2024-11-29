@@ -1,6 +1,7 @@
 package com.example.supabasedemo.compose.screens
 
 import android.content.res.Resources.getSystem
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.supabasedemo.data.model.UserState
+import com.example.supabasedemo.ui.theme.AppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -32,9 +34,14 @@ val Int.px: Int get() = (this * getSystem().displayMetrics.density).toInt()
 
 @Composable
 fun MinigameScreen(
+    onNavigateToMainMenu: () -> Unit,
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        setState(UserState.InMiniGame)
+    }
+
     var score by remember { mutableIntStateOf(0) }
 
     val circleSize = 50.dp
@@ -46,7 +53,7 @@ fun MinigameScreen(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.LightGray)
+            .background(AppTheme.colorScheme.surface)
     ) {
         val maxWidthPx = (this.maxWidth - circleSize).value.toInt().px
         val maxHeightPx = (this.maxHeight - circleSize - 50.dp).value.toInt().px
@@ -197,5 +204,19 @@ fun MinigameScreen(
                 )
             }
         }
+    }
+
+    BackHandler {
+        setState(UserState.InMainMenu)
+    }
+
+    val userState = getState().value
+    when (userState) {
+        is UserState.InMainMenu -> {
+            LaunchedEffect(Unit) {
+                onNavigateToMainMenu()
+            }
+        }
+        else -> {}
     }
 }

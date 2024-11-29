@@ -25,20 +25,29 @@ import com.example.supabasedemo.compose.screens.CreateGameScreen
 import com.example.supabasedemo.compose.screens.LoginScreen
 import com.example.supabasedemo.compose.screens.MainMenuScreen
 import com.example.supabasedemo.compose.screens.SettingsScreen
+import com.example.supabasedemo.compose.screens.MinigameScreen
+import com.example.supabasedemo.compose.screens.SettingsScreen
 import com.example.supabasedemo.compose.screens.SignupScreen
 import com.example.supabasedemo.compose.screens.StatsScreen
 import com.example.supabasedemo.compose.screens.ThemeScreen
 import com.example.supabasedemo.compose.screens.TutorialScreen
+import com.example.supabasedemo.compose.screens.StatsScreen
+import com.example.supabasedemo.compose.screens.ThemeScreen
+import com.example.supabasedemo.compose.screens.TutorialScreen
+import com.example.supabasedemo.compose.screens.MinigameScreen
+import com.example.supabasedemo.compose.screens.UwbScreen
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.ThemeChoice
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
-    private val CAMERA_PERMISSION_REQUEST_CODE = 101
+    private val permissionRequestCode = 101
 
     private val _userState = mutableStateOf<UserState>(UserState.InLoginChoice)
     private val _theme = mutableStateOf<ThemeChoice>(ThemeChoice.System)
+    private val activity = this
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -118,6 +127,17 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
+                composable<Demo> {
+                    UwbScreen(
+                        getState = {
+                            return@UwbScreen _userState
+                        },
+                        setState = {
+                            setState(it)
+                        },
+                        activity
+                    )
+                }
             }
             navigation<MainMenu>(startDestination = Menu) {
                 composable<Menu> {
@@ -144,6 +164,9 @@ class MainActivity : ComponentActivity() {
                         },
                         onNavigateToStats = {
                             navController.navigate(route = Stats)
+                        },
+                        onNavigateToMiniGame = {
+                            navController.navigate(route = MiniGame)
                         },
                         getState = {
                             return@MainMenuScreen _userState
@@ -178,6 +201,19 @@ class MainActivity : ComponentActivity() {
                             setState(it)
                         }
                     )
+                }
+                composable<MiniGame> {
+                    MinigameScreen(
+                        onNavigateToMainMenu = {
+                            navController.popBackStack()
+                        },
+                        getState = {
+                        return@MinigameScreen _userState
+                                   },
+                        setState = {
+                            setState(it)
+                        })
+
                 }
             }
             navigation<Settings>(startDestination = SettingsMenu) {
@@ -269,6 +305,8 @@ class MainActivity : ComponentActivity() {
     object Stats
     @Serializable
     object Tutorial
+    @Serializable
+    object MiniGame
 
     @Serializable
     object Settings
@@ -300,7 +338,7 @@ class MainActivity : ComponentActivity() {
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.CAMERA),
-                CAMERA_PERMISSION_REQUEST_CODE
+                permissionRequestCode
             )
         }
     }

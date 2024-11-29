@@ -24,6 +24,7 @@ fun MainMenuScreen(
     onNavigateToTutorial: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToStats: () -> Unit,
+    onNavigateToMiniGame: () -> Unit,
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit
 ) {
@@ -74,6 +75,13 @@ fun MainMenuScreen(
             }) {
             Text(text = "How to play?")
         }
+        Spacer(modifier = Modifier.padding(8.dp))
+        MyOutlinedButton(
+            onClick = {
+                setState(UserState.InMiniGame)
+            }) {
+            Text(text = "Mini-game")
+        }
     }
 
     val userState = getState().value
@@ -117,6 +125,12 @@ fun MainMenuScreen(
         is UserState.LogoutFailed -> {
             LaunchedEffect(Unit) {
                 setState(UserState.InMainMenu)
+            }
+        }
+
+        is UserState.InMiniGame -> {
+            LaunchedEffect(Unit) {
+                onNavigateToMiniGame()
             }
         }
 
