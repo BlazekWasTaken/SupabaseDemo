@@ -24,41 +24,69 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.supabasedemo.ui.theme.AppTheme
 import java.util.Locale
-import kotlin.math.PI
-import kotlin.math.asin
-import kotlin.math.atan2
 
 @Composable
 fun RotationView(
     context: Context
 ) {
-    var rotation by remember { mutableStateOf(Rotation(0F, 0F, 0F)) }
+    var sensorManager: SensorManager = getSystemService(context, SensorManager::class.java) as SensorManager
 
-    var sensorManager: SensorManager
+    val magnetometer: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+    val accelerometer: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+
+    var magnetometerReading by remember { mutableStateOf(Reading(0F, 0F, 0F)) }
+    var accelerometerReading by remember { mutableStateOf(Reading(0F, 0F, 0F)) }
+    var rotationReading by remember { mutableStateOf(Reading(0F, 0F, 0F)) }
+
     LaunchedEffect(Unit) {
-        sensorManager = getSystemService(context, SensorManager::class.java) as SensorManager
-        val rotationSensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         val sensorEventListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
-                if (event != null) {
-                    val rotationMatrix = FloatArray(9)
+                if (event == null) return
 
-                    SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-
-                    val orientationAngles = FloatArray(3)
-                    SensorManager.getOrientation(rotationMatrix, orientationAngles)
-
-                    rotation = Rotation(orientationAngles[0] * -57.2958F, orientationAngles[1] * -57.2958F, orientationAngles[2] * -57.2958F)
+                if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
+                    magnetometerReading = Reading(event.values[0], event.values[1], event.values[2])
                 }
+                if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+                    accelerometerReading = Reading(event.values[0], event.values[1], event.values[2])
+                }
+
+                val rotationMatrix = FloatArray(9)
+                SensorManager.getRotationMatrix(
+                    rotationMatrix,
+                    null,
+                    floatArrayOf(
+                        accelerometerReading.x,
+                        accelerometerReading.y,
+                        accelerometerReading.z
+                    ),
+                    floatArrayOf(
+                        magnetometerReading.x,
+                        magnetometerReading.y,
+                        magnetometerReading.z
+                    )
+                )
+
+                val orientationAngles = FloatArray(3)
+                SensorManager.getOrientation(rotationMatrix, orientationAngles)
+
+                rotationReading = Reading(
+                    if (orientationAngles[0] * 57 >= 0) orientationAngles[0] * 57 else 360 + (orientationAngles[0] * 57),
+                    orientationAngles[1] * 57,
+                    orientationAngles[2] * 57
+                )
             }
 
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-            }
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
         }
 
         sensorManager.registerListener(
             sensorEventListener,
-            rotationSensor,
+            magnetometer,
+            SensorManager.SENSOR_DELAY_UI
+        )
+        sensorManager.registerListener(
+            sensorEventListener,
+            accelerometer,
             SensorManager.SENSOR_DELAY_UI
         )
     }
@@ -72,11 +100,11 @@ fun RotationView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Log.e("rotation", "rotation :) ${rotation.x} ${rotation.y} ${rotation.z}")
+            Log.e("rotation", "rotation :) ${rotationReading.x} ${rotationReading.y} ${rotationReading.z}")
             Text(text = "ROTATION")
-            Text(text = "azimuth: " + rotation.x.fixForScreen())
-            Text(text = "pitch: " + rotation.y.fixForScreen())
-            Text(text = "roll: " + rotation.z.fixForScreen())
+            Text(text = "azimuth: " + rotationReading.x.fixForScreen())
+            Text(text = "pitch: " + rotationReading.y.fixForScreen())
+            Text(text = "roll: " + rotationReading.z.fixForScreen())
         }
     }
 }
@@ -90,8 +118,8 @@ private fun Float.fixForScreen(): String {
     }
 }
 
-private class Rotation(
-    var x: Float,
-    var y: Float,
-    var z: Float,
+class Reading(
+    val x: Float,
+    val y: Float,
+    val z: Float,
 )
