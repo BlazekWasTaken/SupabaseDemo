@@ -80,4 +80,6 @@ dependencies {
     implementation("androidx.core.uwb:uwb:1.0.0-alpha09")
 
     implementation(libs.androidx.core.splashscreen)
+
+    implementation("com.google.android.gms:play-services-fitness:21.2.0")
 }

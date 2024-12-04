@@ -1,5 +1,7 @@
 package com.example.supabasedemo.compose.screens
 
+import android.Manifest
+import android.app.Activity
 import android.content.res.Resources.getSystem
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
@@ -23,11 +25,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 import android.content.Context
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.os.Build
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.Job
 import kotlin.math.abs
 import kotlin.math.sqrt
@@ -54,44 +59,56 @@ fun MinigameScreen(
 
     var score by remember { mutableIntStateOf(0) }
     var isMoving by remember { mutableStateOf(false) }
+    var lastStepTime by remember { mutableStateOf(System.currentTimeMillis()) }
 
     val context = LocalContext.current
 
     DisposableEffect(Unit) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
-        val sensorEventListener = object : SensorEventListener {
+        val stepDetectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ActivityCompat.requestPermissions(
+                    context as Activity,
+                    arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
+                    0
+                )
+            }
+        }
+
+        val stepListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
-                if (event != null) {
-                    val x = event.values[0]
-                    val y = event.values[1]
-                    val z = event.values[2]
-                    val acceleration = sqrt(x * x + y * y + z * z)
-                    val movementThreshold = 6.0f
-                    isMoving = acceleration > movementThreshold
+                if (event?.sensor?.type == Sensor.TYPE_STEP_DETECTOR) {
+                    val steps = event.values[0]
+                    if (steps > 0) {
+                        lastStepTime = System.currentTimeMillis()
+                    }
                 }
             }
 
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-            }
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
         }
-        sensorManager.registerListener(
-            sensorEventListener,
-            linearAccelerationSensor,
-            SensorManager.SENSOR_DELAY_GAME
-        )
+
+        sensorManager.registerListener(stepListener, stepDetectorSensor, SensorManager.SENSOR_DELAY_GAME)
+
         onDispose {
-            sensorManager.unregisterListener(sensorEventListener)
+            sensorManager.unregisterListener(stepListener)
         }
     }
 
-
-    LaunchedEffect(isMoving) {
+    LaunchedEffect(Unit) {
         while (true) {
+            val currentTime = System.currentTimeMillis()
+            isMoving = (currentTime - lastStepTime) <= 1000
+
             if (isMoving) {
                 if (score > 0) {
                     score--
                 }
+
             }
             delay(1000)
         }
