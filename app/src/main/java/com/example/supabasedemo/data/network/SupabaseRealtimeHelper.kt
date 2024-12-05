@@ -8,9 +8,15 @@ import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.data.network.SupabaseClient.client
 import io.github.jan.supabase.annotations.SupabaseExperimental
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.realtime.channel
+import io.github.jan.supabase.realtime.postgresChangeFlow
+import io.github.jan.supabase.realtime.postgresSingleDataFlow
 import io.github.jan.supabase.realtime.selectSingleValueAsFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 class SupabaseRealtimeHelper(
@@ -19,15 +25,24 @@ class SupabaseRealtimeHelper(
     private val context: Context
 ) {
     @OptIn(SupabaseExperimental::class)
-    fun subscribeToGame(uuid: String, setSubscribedObject: (game: Game) -> Unit) {
-        val flow: Flow<Game> = client.from("games").selectSingleValueAsFlow(Game::uuid) {
-            Game::uuid eq uuid
+    suspend fun subscribeToGame(uuid: String, onGameUpdate: (Game) -> Unit) {
+        val channel = client.channel("games_channel") {}
+
+        val gameFlow: Flow<Game> = channel.postgresSingleDataFlow(
+            schema = "public",
+            table = "games",
+            primaryKey = Game::uuid
+        ) {
+            eq("uuid", uuid)
         }
-        scope.launch {
-            flow.collect {
-                setSubscribedObject(it)
-                Log.e("realtime", it.uuid)
-            }
-        }
+
+        gameFlow.onEach { updatedGame ->
+            onGameUpdate(updatedGame)
+            Log.e("Supabase-Realtime", "Game updated: $updatedGame")
+        }.launchIn(scope)
+
+        channel.subscribe()
     }
 }
+
+
