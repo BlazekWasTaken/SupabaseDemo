@@ -3,6 +3,14 @@ package com.example.supabasedemo.data.network
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import androidx.navigation.NavController
+import com.example.supabasedemo.MainActivity
+import com.example.supabasedemo.MainActivity.LoginChoice
+import com.example.supabasedemo.MainActivity.MainMenu
+import com.example.supabasedemo.MainActivity.MiniGame
+import com.example.supabasedemo.MainActivity.Settings
+import com.example.supabasedemo.MainActivity.Tutorial
+import com.example.supabasedemo.NavControllerProvider
 import com.example.supabasedemo.data.model.Game
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.data.network.SupabaseClient.client
@@ -22,7 +30,7 @@ import kotlinx.coroutines.launch
 class SupabaseRealtimeHelper(
     private val scope: CoroutineScope,
     val setState: (UserState) -> Unit,
-    private val context: Context
+    private val context: Context,
 ) {
     @OptIn(SupabaseExperimental::class)
     suspend fun subscribeToGame(uuid: String, onGameUpdate: (Game) -> Unit) {
@@ -39,6 +47,19 @@ class SupabaseRealtimeHelper(
         gameFlow.onEach { updatedGame ->
             onGameUpdate(updatedGame)
             Log.e("Supabase-Realtime", "Game updated: $updatedGame")
+
+            when (updatedGame.round_no) {
+                1 -> {
+                    NavControllerProvider.navController.navigate(route = MainMenu)
+                }
+                2 -> {
+                    NavControllerProvider.navController.navigate(route = MiniGame)
+                }
+                3 -> {
+                    NavControllerProvider.navController.navigate(route = Settings)
+                }
+            }
+
         }.launchIn(scope)
 
         channel.subscribe()
