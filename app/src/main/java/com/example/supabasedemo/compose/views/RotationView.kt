@@ -70,7 +70,10 @@ fun RotationView(
                 SensorManager.getOrientation(rotationMatrix, orientationAngles)
 
                 rotationReading = Reading(
-                    if (orientationAngles[0] * 57 >= 0) orientationAngles[0] * 57 else 360 + (orientationAngles[0] * 57),
+                    if (orientationAngles[0] * 57 >= 0)
+                        orientationAngles[0] * 57
+                    else
+                        360 + (orientationAngles[0] * 57),
                     orientationAngles[1] * 57,
                     orientationAngles[2] * 57
                 )

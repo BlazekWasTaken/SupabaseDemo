@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -151,7 +153,10 @@ fun UwbScreen(
                 },
                 onValueChange = {
                     address = it
-                }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                )
             )
             if (isController) {
                 val controller = clientSessionScope as UwbControllerSessionScope
@@ -169,7 +174,10 @@ fun UwbScreen(
                     },
                     onValueChange = {
                         preamble = it
-                    }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    )
                 )
                 val controller = clientSessionScope as UwbControleeSessionScope
                 val content = "address: ${Shorts.fromByteArray(controller.localAddress.address)}"
@@ -200,7 +208,7 @@ fun UwbScreen(
                             subSessionKeyInfo = null,
                             complexChannel = uwbComplexChannel,
                             peerDevices = listOf(UwbDevice(partnerAddress)),
-                            updateRateType = RangingParameters.RANGING_UPDATE_RATE_AUTOMATIC
+                            updateRateType = RangingParameters.RANGING_UPDATE_RATE_FREQUENT
                         )
                         val sessionFlow = sessionScope.prepareSession(rangingParameters)
 
@@ -241,6 +249,13 @@ fun UwbScreen(
                                                     avg + stDev).average()
                                             }
                                             distance = distCalc
+
+                                            if (azCalc < 0) {
+                                                azCalc = -azCalc
+                                            }
+                                            else {
+                                                azCalc = 360 - azCalc
+                                            }
                                             azimuth = azCalc
                                         }
                                         is RangingResultPeerDisconnected -> {
