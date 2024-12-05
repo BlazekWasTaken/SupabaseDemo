@@ -1,36 +1,49 @@
 package com.example.supabasedemo.compose.screens
 
+import android.content.ContentValues.TAG
+import android.content.Context
 import android.content.res.Resources.getSystem
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.random.Random
-import android.content.Context
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
-import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.Job
-import kotlin.math.abs
 import kotlin.math.sqrt
+import kotlin.random.Random
 
 
 data class RedCircle(
@@ -54,6 +67,7 @@ fun MinigameScreen(
 
     var score by remember { mutableIntStateOf(0) }
     var isMoving by remember { mutableStateOf(false) }
+    var latestSensorRead by remember { mutableStateOf(System.currentTimeMillis()) }
 
     val context = LocalContext.current
 
@@ -67,8 +81,19 @@ fun MinigameScreen(
                     val y = event.values[1]
                     val z = event.values[2]
                     val acceleration = sqrt(x * x + y * y + z * z)
-                    val movementThreshold = 6.0f
-                    isMoving = acceleration > movementThreshold
+                    val movementThreshold = 3.0f
+                    val movementTimeThreshold = 50
+                    if (acceleration > movementThreshold) {
+                        if (System.currentTimeMillis() - latestSensorRead <= movementTimeThreshold) {
+                            isMoving = true;
+                        } else {
+                            isMoving = false;
+                        }
+                        latestSensorRead = System.currentTimeMillis()
+                        Log.i(TAG, "$x $y $z")
+                    } else {
+                        isMoving = false
+                    }
                 }
             }
 
