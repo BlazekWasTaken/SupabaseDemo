@@ -6,9 +6,7 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,11 +43,12 @@ import androidx.core.uwb.UwbDevice
 import androidx.core.uwb.UwbManager
 import com.example.supabasedemo.compose.viewModels.MainViewModel
 import com.example.supabasedemo.compose.views.AccelerometerView
+import com.example.supabasedemo.compose.views.ArrowView
 import com.example.supabasedemo.compose.views.GyroscopeView
+import com.example.supabasedemo.compose.views.Reading
 import com.example.supabasedemo.compose.views.RotationView
 import com.example.supabasedemo.compose.views.UwbDataView
 import com.example.supabasedemo.data.model.UserState
-import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.MyOutlinedButton
 import com.example.supabasedemo.ui.theme.MyOutlinedTextField
 import com.google.common.primitives.Shorts
@@ -57,7 +56,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.util.Locale
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -90,6 +88,12 @@ fun UwbScreen(
     val azimuths = remember { mutableStateListOf<Float>() }
 
     var permissionGranted by remember { mutableStateOf(false) }
+
+    var isFront by remember { mutableStateOf(true) }
+
+    var accelerometer by remember { mutableStateOf(Reading(0F, 0F, 0F)) }
+    var gyroscope by remember { mutableStateOf(Reading(0F, 0F, 0F)) }
+    var compass by remember { mutableStateOf(Reading(0F, 0F, 0F)) }
 
     LaunchedEffect(Unit) {
          permissionGranted = ContextCompat.checkSelfPermission(
@@ -208,7 +212,7 @@ fun UwbScreen(
                             subSessionKeyInfo = null,
                             complexChannel = uwbComplexChannel,
                             peerDevices = listOf(UwbDevice(partnerAddress)),
-                            updateRateType = RangingParameters.RANGING_UPDATE_RATE_FREQUENT
+                            updateRateType = RangingParameters.RANGING_UPDATE_RATE_INFREQUENT
                         )
                         val sessionFlow = sessionScope.prepareSession(rangingParameters)
 
@@ -250,13 +254,25 @@ fun UwbScreen(
                                             }
                                             distance = distCalc
 
-                                            if (azCalc < 0) {
-                                                azCalc = -azCalc
-                                            }
-                                            else {
-                                                azCalc = 360 - azCalc
-                                            }
+//                                            if (isFront){
+                                                azCalc = if (azCalc < 0) -azCalc
+                                                else 360 - azCalc
+//                                            } else {
+//                                                azCalc += 180
+//                                            }
                                             azimuth = azCalc
+
+                                            if (distances.count() < 20 || azimuths.count() < 20) return@collect
+
+                                            viewModel.supabaseDb.sendReadingToDb(
+                                                distance = distance,
+                                                angle = azimuth,
+                                                stDev = azimuths.stDev(),
+                                                accelerometer = accelerometer,
+                                                gyroscope = gyroscope,
+                                                compass = compass,
+                                                isFront = isFront
+                                            )
                                         }
                                         is RangingResultPeerDisconnected -> {
                                             clientSessionScope = if (isController) {
@@ -293,19 +309,55 @@ fun UwbScreen(
                 },
                 getAzimuth = {
                     return@UwbDataView azimuth
+                },
+                getStDev = {
+                    return@UwbDataView azimuths.stDev()
+//                    return@UwbDataView -1.0
                 }
             )
             Spacer(modifier = Modifier.padding(8.dp))
-            GyroscopeView(context)
+            GyroscopeView(
+                context,
+                setGyroscope = {
+                    gyroscope = it
+                }
+            )
         }
         Spacer(modifier = Modifier.padding(8.dp))
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            AccelerometerView(context)
+            AccelerometerView(
+                context,
+                setAccelerometer = {
+                    accelerometer = it
+                }
+            )
             Spacer(modifier = Modifier.padding(8.dp))
-            RotationView(context)
+            RotationView(
+                context,
+                setCompass = {
+                    compass = it
+                }
+            )
+        }
+        Spacer(modifier = Modifier.padding(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            ArrowView(getAz = {
+                azimuth
+            })
+            Spacer(modifier = Modifier.padding(8.dp))
+            MyOutlinedButton(
+                onClick = {
+                    isFront = !isFront
+                }
+            ) {
+                Text("is front: $isFront")
+            }
         }
     }
     BackHandler {

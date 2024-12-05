@@ -5,12 +5,10 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +26,8 @@ import java.util.Locale
 
 @Composable
 fun GyroscopeView(
-    context: Context
+    context: Context,
+    setGyroscope: (reading: Reading) -> Unit
 ) {
     var gyroscope by remember { mutableStateOf(Gyroscope(0F, 0F, 0F)) }
 
@@ -40,6 +39,7 @@ fun GyroscopeView(
             override fun onSensorChanged(event: SensorEvent?) {
                 if (event != null) {
                     gyroscope = Gyroscope(event.values[0], event.values[1], event.values[2])
+                    setGyroscope(Reading(event.values[0], event.values[1], event.values[2]))
                 }
             }
 
@@ -63,7 +63,7 @@ fun GyroscopeView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Log.e("gyroscope", "gyroscope :) ${gyroscope.x} ${gyroscope.y} ${gyroscope.z}")
+//            Log.e("gyroscope", "gyroscope :) ${gyroscope.x} ${gyroscope.y} ${gyroscope.z}")
             Text(text = "GYROSCOPE")
             Text(text = "x: " + gyroscope.x.fixForScreen())
             Text(text = "y: " + gyroscope.y.fixForScreen())

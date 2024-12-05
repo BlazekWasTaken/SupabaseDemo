@@ -27,7 +27,8 @@ import java.util.Locale
 
 @Composable
 fun AccelerometerView(
-    context: Context
+    context: Context,
+    setAccelerometer: (reading: Reading) -> Unit
 ) {
     var acceleration by remember { mutableStateOf(Acceleration(0F, 0F, 0F)) }
 
@@ -39,6 +40,7 @@ fun AccelerometerView(
             override fun onSensorChanged(event: SensorEvent?) {
                 if (event != null) {
                     acceleration = Acceleration(event.values[0], event.values[1], event.values[2])
+                    setAccelerometer(Reading(event.values[0], event.values[1], event.values[2]))
                 }
             }
 

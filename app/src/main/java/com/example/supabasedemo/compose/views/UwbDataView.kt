@@ -17,7 +17,8 @@ import java.util.Locale
 @Composable
 fun UwbDataView(
     getDistance: () -> Double,
-    getAzimuth: () -> Double
+    getAzimuth: () -> Double,
+    getStDev: () -> Double
 ) {
     Box(
         modifier = Modifier.border(1.dp, AppTheme.colorScheme.outline)
@@ -32,6 +33,7 @@ fun UwbDataView(
             Text(text = "UWB")
             Text(text = "distance: " + getDistance().fixDistanceForScreen())
             Text(text = "angle: " + getAzimuth().fixAngleForScreen())
+            Text(text = "St. dev.: " + getStDev().fixAngleForScreen())
         }
     }
 }
