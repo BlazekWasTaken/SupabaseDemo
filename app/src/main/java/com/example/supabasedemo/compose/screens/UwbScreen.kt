@@ -51,6 +51,7 @@ import com.example.supabasedemo.compose.views.UwbDataView
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.MyOutlinedButton
 import com.example.supabasedemo.ui.theme.MyOutlinedTextField
+import com.example.supabasedemo.utils.TfLiteModel
 import com.google.common.primitives.Shorts
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -89,11 +90,9 @@ fun UwbScreen(
 
     var permissionGranted by remember { mutableStateOf(false) }
 
-    var isFront by remember { mutableStateOf(true) }
-
-    var accelerometerReadings = remember { mutableStateListOf<Reading>() }
-    var gyroscopeReadings = remember { mutableStateListOf<Reading>() }
-    var compassReadings = remember { mutableStateListOf<Reading>() }
+    val accelerometerReadings = remember { mutableStateListOf<Reading>() }
+    val gyroscopeReadings = remember { mutableStateListOf<Reading>() }
+    val compassReadings = remember { mutableStateListOf<Reading>() }
 
     LaunchedEffect(Unit) {
          permissionGranted = ContextCompat.checkSelfPermission(
@@ -260,23 +259,31 @@ fun UwbScreen(
                                             }
                                             distance = distCalc
 
-//                                            if (isFront){
+                                            val azInput= if (azCalc < 0) -azCalc
+                                            else 360 - azCalc
+
+                                            val model = TfLiteModel(context)
+                                            val isFront = model.predict(distance.toFloat(), azInput.toFloat(), azimuths.stDev().toFloat(), accelerometerReadings.toList(), gyroscopeReadings.toList())
+
+                                            if (isFront) {
                                                 azCalc = if (azCalc < 0) -azCalc
                                                 else 360 - azCalc
-//                                            } else {
-//                                                azCalc += 180
-//                                            }
+                                            } else {
+                                                azCalc += 180
+                                            }
+
                                             azimuth = azCalc
 
-                                            viewModel.supabaseDb.sendReadingToDb(
-                                                distance = distance,
-                                                angle = azimuth,
-                                                stDev = azimuths.stDev(),
-                                                accelerometer = accelerometerReadings.toList(),
-                                                gyroscope = gyroscopeReadings.toList(),
-//                                                compass = compassReadings.toList(),
-                                                isFront = isFront
-                                            )
+//                                            viewModel.supabaseDb.sendReadingToDb(
+//                                                distance = distance,
+//                                                angle = azimuth,
+//                                                stDev = azimuths.stDev(),
+//                                                accelerometer = accelerometerReadings.toList(),
+//                                                gyroscope = gyroscopeReadings.toList(),
+//                                                isFront = isFront
+//                                            )
+
+
 
                                             accelerometerReadings.clear()
                                             gyroscopeReadings.clear()
@@ -357,14 +364,14 @@ fun UwbScreen(
             ArrowView(getAz = {
                 azimuth
             })
-            Spacer(modifier = Modifier.padding(8.dp))
-            MyOutlinedButton(
-                onClick = {
-                    isFront = !isFront
-                }
-            ) {
-                Text("is front: $isFront")
-            }
+//            Spacer(modifier = Modifier.padding(8.dp))
+//            MyOutlinedButton(
+//                onClick = {
+//                    isFront = !isFront
+//                }
+//            ) {
+//                Text("is front: $isFront")
+//            }
         }
     }
     BackHandler {
