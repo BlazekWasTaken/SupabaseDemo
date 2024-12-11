@@ -105,7 +105,7 @@ fun RotationView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Log.e("rotation", "rotation :) ${rotationReading.x} ${rotationReading.y} ${rotationReading.z}")
+//            Log.e("rotation", "rotation :) ${rotationReading.x} ${rotationReading.y} ${rotationReading.z}")
             Text(text = "ROTATION")
             Text(text = "azimuth: " + rotationReading.x.fixForScreen())
             Text(text = "pitch: " + rotationReading.y.fixForScreen())

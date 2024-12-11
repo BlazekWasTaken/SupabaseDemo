@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.supabasedemo.ui.theme.AppTheme
 import java.util.Locale
+import android.util.Log
+import kotlin.time.TimeSource
 
 @Composable
 fun GyroscopeView(
@@ -30,6 +32,8 @@ fun GyroscopeView(
     setGyroscope: (reading: Reading) -> Unit
 ) {
     var gyroscope by remember { mutableStateOf(Gyroscope(0F, 0F, 0F)) }
+    val timeSource = TimeSource.Monotonic
+    var lastMark = timeSource.markNow()
 
     var sensorManager: SensorManager
     LaunchedEffect(Unit) {
@@ -39,6 +43,11 @@ fun GyroscopeView(
             override fun onSensorChanged(event: SensorEvent?) {
                 if (event != null) {
                     gyroscope = Gyroscope(event.values[0], event.values[1], event.values[2])
+                    val nowMark = timeSource.markNow()
+                    val diff = nowMark - lastMark
+                    lastMark = nowMark
+
+                    Log.e("gyroscope", "gyroscope :) ${gyroscope.x} ${gyroscope.y} ${gyroscope.z} ${diff.inWholeMilliseconds}ms")
                     setGyroscope(Reading(event.values[0], event.values[1], event.values[2]))
                 }
             }
@@ -50,7 +59,7 @@ fun GyroscopeView(
         sensorManager.registerListener(
             sensorEventListener,
             gyroscopeSensor,
-            SensorManager.SENSOR_DELAY_UI
+            100000
         )
     }
 
@@ -63,7 +72,6 @@ fun GyroscopeView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-//            Log.e("gyroscope", "gyroscope :) ${gyroscope.x} ${gyroscope.y} ${gyroscope.z}")
             Text(text = "GYROSCOPE")
             Text(text = "x: " + gyroscope.x.fixForScreen())
             Text(text = "y: " + gyroscope.y.fixForScreen())

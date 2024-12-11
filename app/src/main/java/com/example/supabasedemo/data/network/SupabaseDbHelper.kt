@@ -82,26 +82,22 @@ class SupabaseDbHelper(
         distance: Double,
         angle: Double,
         stDev: Double,
-        accelerometer: Reading,
-        gyroscope: Reading,
-        compass: Reading,
+        accelerometer: List<Reading>,
+        gyroscope: List<Reading>,
         isFront: Boolean
     ) {
         CoroutineScope(Dispatchers.Main.immediate).launch {
             try{
-                client.from("readings").insert(TestData(
+                client.from("ml_test").insert(TestData(
                     distance = distance,
                     angle = angle,
                     st_dev = stDev,
-                    acc_x = accelerometer.x.toDouble(),
-                    acc_y = accelerometer.y.toDouble(),
-                    acc_z = accelerometer.z.toDouble(),
-                    gyr_x = gyroscope.x.toDouble(),
-                    gyr_y = gyroscope.y.toDouble(),
-                    gyr_z = gyroscope.z.toDouble(),
-                    com_x = compass.x.toDouble(),
-                    com_y = compass.y.toDouble(),
-                    com_z = compass.z.toDouble(),
+                    acc_x = accelerometer.map { it.x.toDouble() }.toDoubleArray(),
+                    acc_y = accelerometer.map { it.y.toDouble() }.toDoubleArray(),
+                    acc_z = accelerometer.map { it.z.toDouble() }.toDoubleArray(),
+                    gyr_x = gyroscope.map { it.x.toDouble() }.toDoubleArray(),
+                    gyr_y = gyroscope.map { it.y.toDouble() }.toDoubleArray(),
+                    gyr_z = gyroscope.map { it.z.toDouble() }.toDoubleArray(),
                     is_front = isFront
                 ))
             } catch (_: Exception) {
@@ -116,14 +112,14 @@ class TestData(
     val distance: Double,
     val angle: Double,
     val st_dev: Double,
-    val acc_x: Double,
-    val acc_y: Double,
-    val acc_z: Double,
-    val gyr_x: Double,
-    val gyr_y: Double,
-    val gyr_z: Double,
-    val com_x: Double,
-    val com_y: Double,
-    val com_z: Double,
+    val acc_x: DoubleArray,
+    val acc_y: DoubleArray,
+    val acc_z: DoubleArray,
+    val gyr_x: DoubleArray,
+    val gyr_y: DoubleArray,
+    val gyr_z: DoubleArray,
+//    val com_x: DoubleArray,
+//    val com_y: DoubleArray,
+//    val com_z: DoubleArray,
     val is_front: Boolean
 )

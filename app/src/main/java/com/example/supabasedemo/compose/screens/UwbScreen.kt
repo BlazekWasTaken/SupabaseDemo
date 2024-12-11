@@ -91,9 +91,9 @@ fun UwbScreen(
 
     var isFront by remember { mutableStateOf(true) }
 
-    var accelerometer by remember { mutableStateOf(Reading(0F, 0F, 0F)) }
-    var gyroscope by remember { mutableStateOf(Reading(0F, 0F, 0F)) }
-    var compass by remember { mutableStateOf(Reading(0F, 0F, 0F)) }
+    var accelerometerReadings = remember { mutableStateListOf<Reading>() }
+    var gyroscopeReadings = remember { mutableStateListOf<Reading>() }
+    var compassReadings = remember { mutableStateListOf<Reading>() }
 
     LaunchedEffect(Unit) {
          permissionGranted = ContextCompat.checkSelfPermission(
@@ -212,7 +212,7 @@ fun UwbScreen(
                             subSessionKeyInfo = null,
                             complexChannel = uwbComplexChannel,
                             peerDevices = listOf(UwbDevice(partnerAddress)),
-                            updateRateType = RangingParameters.RANGING_UPDATE_RATE_INFREQUENT
+                            updateRateType = RangingParameters.RANGING_UPDATE_RATE_AUTOMATIC
                         )
                         val sessionFlow = sessionScope.prepareSession(rangingParameters)
 
@@ -225,6 +225,9 @@ fun UwbScreen(
                                             var distCalc = -1.0
                                             if (distances.count() < 20) {
                                                 distances.add(it.position.distance?.value ?: -1F)
+                                                accelerometerReadings.clear()
+                                                gyroscopeReadings.clear()
+                                                return@collect
                                             }
                                             else if (distances.count() == 20) {
                                                 distances.removeAt(0)
@@ -240,6 +243,9 @@ fun UwbScreen(
                                             var azCalc = -1.0
                                             if (azimuths.count() < 20) {
                                                 azimuths.add(it.position.azimuth?.value ?: -1F)
+                                                accelerometerReadings.clear()
+                                                gyroscopeReadings.clear()
+                                                return@collect
                                             }
                                             else if (azimuths.count() == 20) {
                                                 azimuths.removeAt(0)
@@ -262,17 +268,18 @@ fun UwbScreen(
 //                                            }
                                             azimuth = azCalc
 
-                                            if (distances.count() < 20 || azimuths.count() < 20) return@collect
-
                                             viewModel.supabaseDb.sendReadingToDb(
                                                 distance = distance,
                                                 angle = azimuth,
                                                 stDev = azimuths.stDev(),
-                                                accelerometer = accelerometer,
-                                                gyroscope = gyroscope,
-                                                compass = compass,
+                                                accelerometer = accelerometerReadings.toList(),
+                                                gyroscope = gyroscopeReadings.toList(),
+//                                                compass = compassReadings.toList(),
                                                 isFront = isFront
                                             )
+
+                                            accelerometerReadings.clear()
+                                            gyroscopeReadings.clear()
                                         }
                                         is RangingResultPeerDisconnected -> {
                                             clientSessionScope = if (isController) {
@@ -319,7 +326,7 @@ fun UwbScreen(
             GyroscopeView(
                 context,
                 setGyroscope = {
-                    gyroscope = it
+                    gyroscopeReadings.add(it)
                 }
             )
         }
@@ -331,14 +338,14 @@ fun UwbScreen(
             AccelerometerView(
                 context,
                 setAccelerometer = {
-                    accelerometer = it
+                    accelerometerReadings.add(it)
                 }
             )
             Spacer(modifier = Modifier.padding(8.dp))
             RotationView(
                 context,
                 setCompass = {
-                    compass = it
+                    compassReadings.add(it)
                 }
             )
         }

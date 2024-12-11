@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.supabasedemo.ui.theme.AppTheme
 import java.util.Locale
+import kotlin.time.TimeSource
 
 @Composable
 fun AccelerometerView(
@@ -31,6 +32,8 @@ fun AccelerometerView(
     setAccelerometer: (reading: Reading) -> Unit
 ) {
     var acceleration by remember { mutableStateOf(Acceleration(0F, 0F, 0F)) }
+    val timeSource = TimeSource.Monotonic
+    var lastMark = timeSource.markNow()
 
     var sensorManager: SensorManager
     LaunchedEffect(Unit) {
@@ -40,6 +43,11 @@ fun AccelerometerView(
             override fun onSensorChanged(event: SensorEvent?) {
                 if (event != null) {
                     acceleration = Acceleration(event.values[0], event.values[1], event.values[2])
+                    val nowMark = timeSource.markNow()
+                    val diff = nowMark - lastMark
+                    lastMark = nowMark
+
+                    Log.e("accelerometer", "accelerometer :) ${acceleration.x} ${acceleration.y} ${acceleration.z} ${diff.inWholeMilliseconds}ms")
                     setAccelerometer(Reading(event.values[0], event.values[1], event.values[2]))
                 }
             }
@@ -51,7 +59,7 @@ fun AccelerometerView(
         sensorManager.registerListener(
             sensorEventListener,
             linearAccelerometer,
-            SensorManager.SENSOR_DELAY_UI
+            100000
         )
     }
 
@@ -64,7 +72,6 @@ fun AccelerometerView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Log.e("accelerometer", "accelerometer :) ${acceleration.x} ${acceleration.y} ${acceleration.z}")
             Text(text = "ACCELEROMETER")
             Text(text = "x: " + acceleration.x.fixForScreen())
             Text(text = "y: " + acceleration.y.fixForScreen())
