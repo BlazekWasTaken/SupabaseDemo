@@ -1,6 +1,7 @@
 package com.example.supabasedemo
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -32,6 +34,12 @@ import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.ThemeChoice
 import kotlinx.serialization.Serializable
+
+// The NavControllerProvider is singleton object that acts as a global holder for the NavController instance.
+object NavControllerProvider {
+    @SuppressLint("StaticFieldLeak")
+    lateinit var navController: NavController
+}
 
 class MainActivity : ComponentActivity() {
     private val permissionRequestCode = 101
@@ -59,6 +67,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun Navigation() {
         val navController = rememberNavController()
+        NavControllerProvider.navController = navController
         NavHost(
             navController = navController,
             startDestination = LoginProcess
@@ -187,8 +196,8 @@ class MainActivity : ComponentActivity() {
                             navController.popBackStack()
                         },
                         getState = {
-                        return@MinigameScreen _userState
-                                   },
+                            return@MinigameScreen _userState
+                        },
                         setState = {
                             setState(it)
                         })
@@ -279,37 +288,49 @@ class MainActivity : ComponentActivity() {
     // region objects
     @Serializable
     object LoginProcess
+
     @Serializable
     object LoginChoice
+
     @Serializable
     object Login
+
     @Serializable
     object Signup
 
     @Serializable
     object MainMenu
+
     @Serializable
     object Menu
+
     @Serializable
     object Stats
+
     @Serializable
     object Tutorial
+
     @Serializable
     object MiniGame
 
     @Serializable
     object Settings
+
     @Serializable
     object SettingsMenu
+
     @Serializable
     object AccountInfo
+
     @Serializable
     object Theme
+
     @Serializable
     object Demo
 
     @Serializable
     object Game
+
     @Serializable
     object GameStart
     // endregion
