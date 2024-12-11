@@ -54,11 +54,11 @@ fun CreateGameScreen(
     }
 
     if (gameDetails != null) {
-        LaunchedEffect(Unit) {
+        LaunchedEffect(gameDetails!!.uuid) {
             viewModel.supabaseRealtime.subscribeToGame(
                 uuid = gameDetails!!.uuid,
-                setSubscribedObject = {
-                    gameSubscription = it
+                onGameUpdate = { updatedGame ->
+                    gameSubscription = updatedGame
                 }
             )
         }
@@ -71,24 +71,15 @@ fun CreateGameScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (gameSubscription != null) {
-            Text(text = gameSubscription!!.uuid)
-            if (gameSubscription!!.user1 != null) {
-                Text(text = gameSubscription!!.user1!!)
+        gameSubscription?.let { game ->
+            when (game.round_no) {
+                0 -> Text("Waiting for players to join...")
+                1 -> Text("Round 1: Game Started!")
+                2 -> Text("Round 2: Continue the game!")
+                3 -> Text("Round 3: Final round!")
             }
-            else {
-                Text(text = "no user 1")
-            }
-            if (gameSubscription!!.user2 != null) {
-                Text(text = gameSubscription!!.user2!!)
-            }
-            else {
-                Text(text = "no user 2")
-            }
-        }
-        else {
-            Text(text = "subscription not working now")
-        }
+        } ?: Text("No game subscription yet.")
+
         Spacer(modifier = Modifier.padding(16.dp))
         MyOutlinedButton(
             onClick = {
@@ -161,7 +152,7 @@ fun CreateGameScreen(
                     Text("Game UUID: ${gameDetails!!.uuid}")
                     Text("User 1: ${gameDetails!!.user1}")
                     Text("User 2: ${gameDetails!!.user2 ?: "Waiting for player"}")
-                    Text("Round: ${gameDetails!!.roundNo}")
+                    Text("Round: ${gameDetails!!.round_no}")
                     Text("Start Time: ${gameDetails!!.startTime ?: "Not started yet"}")
                     Text("End Time: ${gameDetails!!.endTime ?: "Not ended yet"}")
                     Text("Winner: ${gameDetails!!.won?.let { if (it) "User 1" else "User 2" } ?: "TBD"}")
@@ -170,9 +161,7 @@ fun CreateGameScreen(
 
             is UserState.QrScanFailed -> {
                 Text("Error: $errorMessage", color = Color.Red)
-            }
-
-            else -> {
+            } else -> {
 
             }
         }

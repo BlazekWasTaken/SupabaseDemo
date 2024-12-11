@@ -8,7 +8,7 @@ data class Game(
     val uuid: String,
     val startTime: String? = null,
     val endTime: String? = null,
-    val roundNo: Short = 0,
+    val round_no: Int = -1,
     val user1: String?,
     val user2: String? = null,
     val won: Boolean? = null
