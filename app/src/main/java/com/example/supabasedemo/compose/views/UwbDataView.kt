@@ -16,8 +16,8 @@ import java.util.Locale
 
 @Composable
 fun UwbDataView(
-    getDistance: () -> Double,
-    getAzimuth: () -> Double
+    distance: Double = UwbManagerSingleton.getDistance(),
+    azimuth: Double = UwbManagerSingleton.getAzimuth()
 ) {
     Box(
         modifier = Modifier.border(1.dp, AppTheme.colorScheme.outline)
@@ -28,18 +28,26 @@ fun UwbDataView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Log.e("uwb", "distance ${getDistance()} angle ${getAzimuth()}")
+            Log.e("uwb", "distance $distance angle $azimuth")
             Text(text = "UWB")
-            Text(text = "distance: " + getDistance().fixDistanceForScreen())
-            Text(text = "angle: " + getAzimuth().fixAngleForScreen())
+            Text(text = "distance: ${distance.fixDistanceForScreen()}")
+            Text(text = "angle: ${azimuth.fixAngleForScreen()}")
         }
     }
 }
 
 private fun Double.fixDistanceForScreen(): String {
-    return if (this != -1.0) { String.format(Locale.getDefault(), "%.2f", this) + "m" } else { "Loading..." }
+    return if (this != -1.0) {
+        String.format(Locale.getDefault(), "%.2f", this) + "m"
+    } else {
+        "Loading. . ."
+    }
 }
 
 private fun Double.fixAngleForScreen(): String {
-    return if (this != -1.0) { String.format(Locale.getDefault(), "%.0f", this) + "\u00B0" } else { "Loading..." }
+    return if (this != -1.0) {
+        String.format(Locale.getDefault(), "%.0f", this) + "\u00B0"
+    } else {
+        "Loading. . ."
+    }
 }
