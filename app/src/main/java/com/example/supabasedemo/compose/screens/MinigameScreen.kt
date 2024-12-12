@@ -15,7 +15,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -53,13 +56,21 @@ data class RedCircle(
     var isVisible: Boolean = false
 )
 
+data class GreenSquare(
+    val id: Int,
+    val offsetX: Animatable<Float, *> = Animatable(0f),
+    val offsetY: Animatable<Float, *> = Animatable(0f),
+    var isVisible: Boolean = false
+)
+
 val Int.px: Int get() = (this * getSystem().displayMetrics.density).toInt()
 
 @Composable
 fun MinigameScreen(
     onNavigateToMainMenu: () -> Unit,
     getState: () -> MutableState<UserState>,
-    setState: (state: UserState) -> Unit
+    setState: (state: UserState) -> Unit,
+    round: Int = 0
 ) {
     LaunchedEffect(Unit) {
         setState(UserState.InMiniGame)
@@ -70,6 +81,18 @@ fun MinigameScreen(
     var latestSensorRead by remember { mutableStateOf(System.currentTimeMillis()) }
 
     val context = LocalContext.current
+
+    val totalTime = 30
+    var timeLeft by remember { mutableIntStateOf(totalTime) }
+
+    LaunchedEffect(Unit) {
+        while (timeLeft > 0) {
+            delay(1000)
+            timeLeft--
+        }
+        setState(UserState.InMainMenu)
+    }
+
 
     DisposableEffect(Unit) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -85,9 +108,9 @@ fun MinigameScreen(
                     val movementTimeThreshold = 50
                     if (acceleration > movementThreshold) {
                         if (System.currentTimeMillis() - latestSensorRead <= movementTimeThreshold) {
-                            isMoving = true;
+                            isMoving = true
                         } else {
-                            isMoving = false;
+                            isMoving = false
                         }
                         latestSensorRead = System.currentTimeMillis()
                         Log.i(TAG, "$x $y $z")
@@ -128,93 +151,57 @@ fun MinigameScreen(
     val delayDuration = 1500
     val fadeoutDuration = 500
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
-            .fillMaxSize()
-            .background(AppTheme.colorScheme.surface)
+            .fillMaxWidth()
+            .fillMaxHeight()
     ) {
-        val maxWidthPx = (this.maxWidth - circleSize).value.toInt().px
-        val maxHeightPx = (this.maxHeight - circleSize - 50.dp).value.toInt().px
-
-        val greenOffsetX = remember { Animatable(Random.nextFloat() * maxWidthPx) }
-        val greenOffsetY = remember { Animatable(Random.nextFloat() * maxHeightPx) }
-
-        var isGreenVisible by remember { mutableStateOf(true) }
-
-        val redCircles = remember { mutableStateListOf<RedCircle>() }
-        var redCircleId by remember { mutableIntStateOf(0) }
-
-        LaunchedEffect(Unit) {
-            redCircles.add(
-                RedCircle(
-                    id = redCircleId++,
-                    offsetX = Animatable(Random.nextFloat() * maxWidthPx),
-                    offsetY = Animatable(Random.nextFloat() * maxHeightPx)
-                )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.padding(16.dp))
+            Text(
+                text = "ROUND: $round",
+                fontSize = 24.sp,
+                modifier = Modifier.padding(16.dp)
             )
-        }
+            Text(
+                text = "Score: $score",
+                fontSize = 24.sp,
+                modifier = Modifier.padding(8.dp)
+            )
+            Text(
+                text = "Click only green circles for +1 points.\n" +
+                        "If you click something else, you get -1 points.\n" +
+                        "If you move, you get -1 points for every second of movement.",
+                fontSize = 24.sp,
+                modifier = Modifier.padding(8.dp)
+            )
 
-        var cycleCount by remember { mutableIntStateOf(0) }
+            BoxWithConstraints(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(AppTheme.colorScheme.surface)
+            ) {
+                val maxWidthPx = (this.maxWidth - circleSize).value.toInt().px
+                val maxHeightPx = (this.maxHeight - circleSize - 50.dp).value.toInt().px
 
-        LaunchedEffect(key1 = "AnimationLoop") {
-            println("Animation loop started")
-            while (true) {
-                cycleCount++
+                val greenOffsetX = remember { Animatable(Random.nextFloat() * maxWidthPx) }
+                val greenOffsetY = remember { Animatable(Random.nextFloat() * maxHeightPx) }
 
-                redCircles.forEach { it.isVisible = true }
+                var isGreenVisible by remember { mutableStateOf(true) }
 
-                isGreenVisible = true
+                val redCircles = remember { mutableStateListOf<RedCircle>() }
+                var redCircleId by remember { mutableIntStateOf(0) }
 
-                val redAnimationsX = redCircles.map { redCircle ->
-                    launch {
-                        val targetRedX = Random.nextFloat() * maxWidthPx
+                val greenSquares = remember { mutableStateListOf<GreenSquare>() }
+                var greenSquareId by remember { mutableIntStateOf(0) }
 
-                        redCircle.offsetX.animateTo(
-                            targetValue = targetRedX,
-                            animationSpec = tween(durationMillis = animationDuration)
-                        )
-
-                    }
-                }
-
-                val redAnimationsY = redCircles.map { redCircle ->
-                    launch {
-                        val targetRedY = Random.nextFloat() * maxHeightPx
-                        redCircle.offsetY.animateTo(
-                            targetValue = targetRedY,
-                            animationSpec = tween(durationMillis = animationDuration)
-                        )
-
-                    }
-                }
-
-                val targetGreenX = Random.nextFloat() * maxWidthPx
-                val targetGreenY = Random.nextFloat() * maxHeightPx
-
-                val greenAnimX = launch {
-                    greenOffsetX.animateTo(
-                        targetValue = targetGreenX,
-                        animationSpec = tween(durationMillis = animationDuration)
-                    )
-                }
-                val greenAnimY = launch {
-                    greenOffsetY.animateTo(
-                        targetValue = targetGreenY,
-                        animationSpec = tween(durationMillis = animationDuration)
-                    )
-                }
-
-                redAnimationsX.forEach { it.join() }
-                redAnimationsY.forEach { it.join() }
-
-                greenAnimX.join()
-                greenAnimY.join()
-
-                isGreenVisible = false
-
-                redCircles.forEach { it.isVisible = false }
-
-                if (cycleCount % 2 == 0) {
+                LaunchedEffect(Unit) {
                     redCircles.add(
                         RedCircle(
                             id = redCircleId++,
@@ -224,63 +211,199 @@ fun MinigameScreen(
                     )
                 }
 
-                delay(fadeoutDuration.toLong())
+                var cycleCount by remember { mutableIntStateOf(0) }
 
-                greenOffsetX.snapTo(Random.nextFloat() * maxWidthPx)
-                greenOffsetY.snapTo(Random.nextFloat() * maxHeightPx)
-                redCircles.forEach {
-                    it.isVisible = false
-                    it.offsetX.snapTo(Random.nextFloat() * maxWidthPx)
-                }
-                redCircles.forEach {
-                    it.isVisible = false
-                    it.offsetY.snapTo(Random.nextFloat() * maxHeightPx)
-                }
+                LaunchedEffect(key1 = "AnimationLoop") {
+                    println("Animation loop started")
+                    while (true) {
+                        cycleCount++
 
-                delay(delayDuration.toLong())
-            }
-        }
+                        redCircles.forEach { it.isVisible = true }
+                        greenSquares.forEach { it.isVisible = true }
 
-        Text(
-            text = "Score: $score",
-            fontSize = 24.sp,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 40.dp)
-        )
+                        isGreenVisible = true
 
-        val greenOffsetXDp = with(density) { greenOffsetX.value.toDp() }
-        val greenOffsetYDp = with(density) { greenOffsetY.value.toDp() }
+                        val redAnimationsX = redCircles.map { redCircle ->
+                            launch {
+                                val targetRedX = Random.nextFloat() * maxWidthPx
 
-        if (isGreenVisible) {
-            Box(
-                modifier = Modifier
-                    .size(circleSize)
-                    .offset(x = greenOffsetXDp, y = greenOffsetYDp)
-                    .background(Color.Green, CircleShape)
-                    .clickable {
-                        score++
-                        isGreenVisible = false
-                    }
-            )
-        }
+                                redCircle.offsetX.animateTo(
+                                    targetValue = targetRedX,
+                                    animationSpec = tween(durationMillis = animationDuration)
+                                )
 
-        redCircles.forEach { redCircle ->
-            val redOffsetXDp = with(density) { redCircle.offsetX.value.toDp() }
-            val redOffsetYDp = with(density) { redCircle.offsetY.value.toDp() }
-
-            if (redCircle.isVisible) {
-                Box(
-                    modifier = Modifier
-                        .size(circleSize)
-                        .offset(x = redOffsetXDp, y = redOffsetYDp)
-                        .background(Color.Red, CircleShape)
-                        .clickable {
-                            score--
-                            redCircle.isVisible = false
+                            }
                         }
-                )
+
+                        val redAnimationsY = redCircles.map { redCircle ->
+                            launch {
+                                val targetRedY = Random.nextFloat() * maxHeightPx
+                                redCircle.offsetY.animateTo(
+                                    targetValue = targetRedY,
+                                    animationSpec = tween(durationMillis = animationDuration)
+                                )
+
+                            }
+                        }
+
+                        val greenSquaresAnimationsX = greenSquares.map { greenSquare ->
+                            launch {
+                                val targetGreenSquareX = Random.nextFloat() * maxWidthPx
+
+                                greenSquare.offsetX.animateTo(
+                                    targetValue = targetGreenSquareX,
+                                    animationSpec = tween(durationMillis = animationDuration)
+                                )
+
+                            }
+                        }
+
+                        val greenSquaresAnimationsY = greenSquares.map { greenSquare ->
+                            launch {
+                                val targetGreenSquareY = Random.nextFloat() * maxHeightPx
+                                greenSquare.offsetY.animateTo(
+                                    targetValue = targetGreenSquareY,
+                                    animationSpec = tween(durationMillis = animationDuration)
+                                )
+
+                            }
+                        }
+
+                        val targetGreenX = Random.nextFloat() * maxWidthPx
+                        val targetGreenY = Random.nextFloat() * maxHeightPx
+
+                        val greenAnimX = launch {
+                            greenOffsetX.animateTo(
+                                targetValue = targetGreenX,
+                                animationSpec = tween(durationMillis = animationDuration)
+                            )
+                        }
+                        val greenAnimY = launch {
+                            greenOffsetY.animateTo(
+                                targetValue = targetGreenY,
+                                animationSpec = tween(durationMillis = animationDuration)
+                            )
+                        }
+
+                        redAnimationsX.forEach { it.join() }
+                        redAnimationsY.forEach { it.join() }
+
+                        greenSquaresAnimationsX.forEach { it.join() }
+                        greenSquaresAnimationsY.forEach { it.join() }
+
+                        greenAnimX.join()
+                        greenAnimY.join()
+
+                        isGreenVisible = false
+
+                        redCircles.forEach { it.isVisible = false }
+
+                        greenSquares.forEach { it.isVisible = false }
+
+                        if (cycleCount % 2 == 0) {
+                            redCircles.add(
+                                RedCircle(
+                                    id = redCircleId++,
+                                    offsetX = Animatable(Random.nextFloat() * maxWidthPx),
+                                    offsetY = Animatable(Random.nextFloat() * maxHeightPx)
+                                )
+                            )
+                        }
+
+                        if (cycleCount % 3 == 0) {
+                            greenSquares.add(
+                                GreenSquare(
+                                    id = greenSquareId++,
+                                    offsetX = Animatable(Random.nextFloat() * maxWidthPx),
+                                    offsetY = Animatable(Random.nextFloat() * maxHeightPx)
+                                )
+                            )
+                        }
+
+                        delay(fadeoutDuration.toLong())
+
+                        greenOffsetX.snapTo(Random.nextFloat() * maxWidthPx)
+                        greenOffsetY.snapTo(Random.nextFloat() * maxHeightPx)
+                        redCircles.forEach {
+                            it.offsetX.snapTo(Random.nextFloat() * maxWidthPx)
+                        }
+                        redCircles.forEach {
+                            it.offsetY.snapTo(Random.nextFloat() * maxHeightPx)
+                        }
+
+                        greenSquares.forEach {
+                            it.offsetX.snapTo(Random.nextFloat() * maxWidthPx)
+                        }
+
+                        greenSquares.forEach {
+                            it.offsetY.snapTo(Random.nextFloat() * maxHeightPx)
+                        }
+
+                        delay(delayDuration.toLong())
+                    }
+                }
+
+                val greenOffsetXDp = with(density) { greenOffsetX.value.toDp() }
+                val greenOffsetYDp = with(density) { greenOffsetY.value.toDp() }
+
+                redCircles.forEach { redCircle ->
+                    val redOffsetXDp = with(density) { redCircle.offsetX.value.toDp() }
+                    val redOffsetYDp = with(density) { redCircle.offsetY.value.toDp() }
+
+                    if (redCircle.isVisible) {
+                        Box(
+                            modifier = Modifier
+                                .size(circleSize)
+                                .offset(x = redOffsetXDp, y = redOffsetYDp)
+                                .background(Color.Red, CircleShape)
+                                .clickable {
+                                    if (score > 0) {
+                                        score--
+                                    }
+                                    redCircle.isVisible = false
+                                }
+                        )
+                    }
+                }
+
+                greenSquares.forEach { greenSquare ->
+                    val greenSquareOffsetXDp = with(density) { greenSquare.offsetX.value.toDp() }
+                    val greenSquareOffsetYDp = with(density) { greenSquare.offsetY.value.toDp() }
+
+                    if (greenSquare.isVisible) {
+                        Box(
+                            modifier = Modifier
+                                .size(circleSize)
+                                .offset(x = greenSquareOffsetXDp, y = greenSquareOffsetYDp)
+                                .background(Color.Green)
+                                .clickable {
+                                    if (score > 0) {
+                                        score--
+                                    }
+                                    greenSquare.isVisible = false
+                                }
+                        )
+                    }
+                }
+
+                if (isGreenVisible) {
+                    Box(
+                        modifier = Modifier
+                            .size(circleSize)
+                            .offset(x = greenOffsetXDp, y = greenOffsetYDp)
+                            .background(Color.Green, CircleShape)
+                            .clickable {
+                                score++
+                                isGreenVisible = false
+                            }
+                    )
+                }
             }
+            Text(
+                text = "Time left: $timeLeft",
+                fontSize = 24.sp,
+                modifier = Modifier.padding(bottom = 60.dp)
+            )
         }
     }
 
