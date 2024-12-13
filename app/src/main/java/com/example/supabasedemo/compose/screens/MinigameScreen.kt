@@ -12,6 +12,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -173,19 +174,21 @@ fun MinigameScreen(
                 fontSize = 24.sp,
                 modifier = Modifier.padding(8.dp)
             )
-            Text(
-                text = "Click only green circles for +1 points.\n" +
-                        "If you click something else, you get -1 points.\n" +
-                        "If you move, you get -1 points for every second of movement.",
-                fontSize = 24.sp,
-                modifier = Modifier.padding(8.dp)
-            )
+//            Text(
+//                text = "Click only green circles for +1 points.\n" +
+//                        "If you click something else, you get -1 points.\n" +
+//                        "If you move, you get -1 points for every second of movement.",
+//                fontSize = 24.sp,
+//                modifier = Modifier.padding(8.dp)
+//            )
 
             BoxWithConstraints(
                 modifier = Modifier
                     .weight(1f)
+                    .padding(horizontal = 10.dp, vertical = 10.dp)
                     .fillMaxWidth()
                     .background(AppTheme.colorScheme.surface)
+                    .border(2.dp, AppTheme.colorScheme.outline)
             ) {
                 val maxWidthPx = (this.maxWidth - circleSize).value.toInt().px
                 val maxHeightPx = (this.maxHeight - circleSize - 50.dp).value.toInt().px
