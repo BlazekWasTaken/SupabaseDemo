@@ -27,7 +27,7 @@ import java.util.Locale
 @Composable
 fun GyroscopeView(
     context: Context,
-    setGyroscope: (reading: Reading) -> Unit
+//    setGyroscope: (reading: Reading) -> Unit
 ) {
     var gyroscope by remember { mutableStateOf(Gyroscope(0F, 0F, 0F)) }
 
@@ -39,7 +39,7 @@ fun GyroscopeView(
             override fun onSensorChanged(event: SensorEvent?) {
                 if (event != null) {
                     gyroscope = Gyroscope(event.values[0], event.values[1], event.values[2])
-                    setGyroscope(Reading(event.values[0], event.values[1], event.values[2]))
+//                    setGyroscope(Reading(event.values[0], event.values[1], event.values[2]))
                 }
             }
 

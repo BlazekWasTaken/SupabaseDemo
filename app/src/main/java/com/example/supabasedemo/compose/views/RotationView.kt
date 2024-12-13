@@ -28,7 +28,7 @@ import java.util.Locale
 @Composable
 fun RotationView(
     context: Context,
-    setCompass: (reading: Reading) -> Unit
+//    setCompass: (reading: Reading) -> Unit
 ) {
     val sensorManager: SensorManager = getSystemService(context, SensorManager::class.java) as SensorManager
 
@@ -78,7 +78,7 @@ fun RotationView(
                     orientationAngles[1] * 57,
                     orientationAngles[2] * 57
                 )
-                setCompass(rotationReading)
+//                setCompass(rotationReading)
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
