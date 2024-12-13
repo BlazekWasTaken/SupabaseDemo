@@ -1,12 +1,15 @@
 package com.example.supabasedemo.compose.screens
 
+import UwbManagerSingleton
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -43,20 +47,20 @@ import androidx.core.uwb.UwbDevice
 import androidx.core.uwb.UwbManager
 import com.example.supabasedemo.compose.viewModels.MainViewModel
 import com.example.supabasedemo.compose.views.AccelerometerView
-import com.example.supabasedemo.compose.views.ArrowView
 import com.example.supabasedemo.compose.views.GyroscopeView
-import com.example.supabasedemo.compose.views.Reading
 import com.example.supabasedemo.compose.views.RotationView
 import com.example.supabasedemo.compose.views.UwbDataView
 import com.example.supabasedemo.data.model.UserState
+import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.MyOutlinedButton
 import com.example.supabasedemo.ui.theme.MyOutlinedTextField
-import com.example.supabasedemo.utils.TfLiteModel
 import com.google.common.primitives.Shorts
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import java.util.Locale
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -74,48 +78,29 @@ fun UwbScreen(
     val context = LocalContext.current
     val viewModel = MainViewModel(context, setState = { setState(it) })
 
-    val uwbManager = UwbManager.createInstance(context)
-    var clientSessionScope: UwbClientSessionScope? by remember { mutableStateOf(null) }
-
     var isController by remember { mutableStateOf(true) }
-    var isStarted by remember { mutableStateOf(false) }
+
+    val isStarted by UwbManagerSingleton.isStartedFlow.collectAsState(initial = false)
     var address by remember { mutableStateOf("") }
     var preamble by remember { mutableStateOf("") }
-
-    var distance by remember { mutableDoubleStateOf(-1.0) }
-    var azimuth by remember { mutableDoubleStateOf(-1.0) }
-
-    val distances = remember { mutableStateListOf<Float>() }
-    val azimuths = remember { mutableStateListOf<Float>() }
+    val deviceAddress by UwbManagerSingleton.address.collectAsState(initial = "-1")
+    val devicePreamble by UwbManagerSingleton.preamble.collectAsState(initial = "-1")
 
     var permissionGranted by remember { mutableStateOf(false) }
 
-    val accelerometerReadings = remember { mutableStateListOf<Reading>() }
-    val gyroscopeReadings = remember { mutableStateListOf<Reading>() }
-    val compassReadings = remember { mutableStateListOf<Reading>() }
-
     LaunchedEffect(Unit) {
-         permissionGranted = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.UWB_RANGING
+        UwbManagerSingleton.initialize(context, isController)
+
+        permissionGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.UWB_RANGING
         ) == PackageManager.PERMISSION_GRANTED
         if (!permissionGranted) {
             ActivityCompat.requestPermissions(
-                context as Activity,
-                arrayOf(Manifest.permission.UWB_RANGING),
-                101
+                context as Activity, arrayOf(Manifest.permission.UWB_RANGING), 101
             )
         }
-    }
 
-    LaunchedEffect(Unit) {
-        CoroutineScope(Dispatchers.Main.immediate).launch {
-            clientSessionScope = if (isController) {
-                uwbManager.controllerSessionScope()
-            } else {
-                uwbManager.controleeSessionScope()
-            }
-        }
+        UwbManagerSingleton.fetchDeviceDetails()
     }
 
     Column(
@@ -131,262 +116,98 @@ fun UwbScreen(
         ) {
             Text(text = "Controller:")
             Spacer(modifier = Modifier.padding(8.dp))
-            Switch(
-                checked = isController,
-                onCheckedChange = {
-                    isController = it
-                    isStarted = false
-                    clientSessionScope = null
-                    CoroutineScope(Dispatchers.Main.immediate).launch {
-                        clientSessionScope = if (isController) {
-                            uwbManager.controllerSessionScope()
-                        } else {
-                            uwbManager.controleeSessionScope()
-                        }
-                    }
-                }
-            )
+            Switch(checked = isController, onCheckedChange = {
+                isController = it
+                UwbManagerSingleton.setRoleAsController(it, context)
+                UwbManagerSingleton.stopSession()
+            })
         }
-        if (clientSessionScope != null) {
+
+        MyOutlinedTextField(
+            value = address,
+            onValueChange = { address = it },
+            placeholder = { Text(text = "Enter Partner Address") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+        )
+
+        if (!isController) {
             Spacer(modifier = Modifier.padding(8.dp))
             MyOutlinedTextField(
-                value = address,
-                placeholder = {
-                    Text(text = "Enter address")
-                },
-                onValueChange = {
-                    address = it
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
-                )
+                value = preamble,
+                onValueChange = { preamble = it },
+                placeholder = { Text(text = "Enter Preamble Value") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
-            if (isController) {
-                val controller = clientSessionScope as UwbControllerSessionScope
-                val content = "address: ${Shorts.fromByteArray(controller.localAddress.address)} \n" +
-                        "preamble: ${controller.uwbComplexChannel.preambleIndex}"
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text(text = content)
-            }
-            else {
-                Spacer(modifier = Modifier.padding(8.dp))
-                MyOutlinedTextField(
-                    value = preamble,
-                    placeholder = {
-                        Text(text = "Enter preamble")
-                    },
-                    onValueChange = {
-                        preamble = it
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number
-                    )
-                )
-                val controller = clientSessionScope as UwbControleeSessionScope
-                val content = "address: ${Shorts.fromByteArray(controller.localAddress.address)}"
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text(text = content)
-            }
-            if (!isStarted) {
-                Spacer(modifier = Modifier.padding(8.dp))
-                MyOutlinedButton(
-                    onClick = {
-                        val partnerAddress = UwbAddress(Shorts.toByteArray(address.toShort()))
-                        val uwbComplexChannel: UwbComplexChannel?
+        }
 
-                        val sessionScope: UwbClientSessionScope?
-                        if (isController) {
-                            sessionScope = (clientSessionScope as UwbControllerSessionScope)
-                            uwbComplexChannel = sessionScope.uwbComplexChannel
-                        }
-                        else {
-                            sessionScope = (clientSessionScope as UwbControleeSessionScope)
-                            uwbComplexChannel = UwbComplexChannel(9, preamble.toInt())
-                        }
-                        val rangingParameters = RangingParameters(
-                            uwbConfigType = RangingParameters.CONFIG_UNICAST_DS_TWR,
-                            sessionId = 12345,
-                            subSessionId = 0,
-                            sessionKeyInfo = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0),
-                            subSessionKeyInfo = null,
-                            complexChannel = uwbComplexChannel,
-                            peerDevices = listOf(UwbDevice(partnerAddress)),
-                            updateRateType = RangingParameters.RANGING_UPDATE_RATE_AUTOMATIC
-                        )
-                        val sessionFlow = sessionScope.prepareSession(rangingParameters)
+        Spacer(modifier = Modifier.padding(8.dp))
 
-                        isStarted = true
-                        CoroutineScope(Dispatchers.Main.immediate).launch {
-                            try {
-                                sessionFlow.collect {
-                                    when(it) {
-                                        is RangingResultPosition -> {
-                                            var distCalc = -1.0
-                                            if (distances.count() < 20) {
-                                                distances.add(it.position.distance?.value ?: -1F)
-                                                accelerometerReadings.clear()
-                                                gyroscopeReadings.clear()
-                                                return@collect
-                                            }
-                                            else if (distances.count() == 20) {
-                                                distances.removeAt(0)
-                                                distances.add(it.position.distance?.value ?: -1F)
+        Text(text = "Your Device Address: $deviceAddress")
+        if (isController) {
+            Text(text = "Your Preamble: $devicePreamble")
+        }
 
-                                                val avg = distances.average()
-                                                val stDev = distances.stDev()
+        Spacer(modifier = Modifier.padding(8.dp))
 
-                                                distCalc = distances.between(
-                                                    avg - stDev,
-                                                    avg + stDev).average()
-                                            }
-                                            var azCalc = -1.0
-                                            if (azimuths.count() < 20) {
-                                                azimuths.add(it.position.azimuth?.value ?: -1F)
-                                                accelerometerReadings.clear()
-                                                gyroscopeReadings.clear()
-                                                return@collect
-                                            }
-                                            else if (azimuths.count() == 20) {
-                                                azimuths.removeAt(0)
-                                                azimuths.add(it.position.azimuth?.value ?: -1F)
-
-                                                val avg = azimuths.average()
-                                                val stDev = azimuths.stDev()
-
-                                                azCalc = azimuths.between(
-                                                    avg - stDev,
-                                                    avg + stDev).average()
-                                            }
-                                            distance = distCalc
-
-                                            val azInput= if (azCalc < 0) -azCalc
-                                            else 360 - azCalc
-
-                                            val model = TfLiteModel(context)
-                                            val isFront = model.predict(distance.toFloat(), azInput.toFloat(), azimuths.stDev().toFloat(), accelerometerReadings.toList(), gyroscopeReadings.toList())
-
-                                            if (isFront) {
-                                                azCalc = if (azCalc < 0) -azCalc
-                                                else 360 - azCalc
-                                            } else {
-                                                azCalc += 180
-                                            }
-
-                                            azimuth = azCalc
-
-//                                            viewModel.supabaseDb.sendReadingToDb(
-//                                                distance = distance,
-//                                                angle = azimuth,
-//                                                stDev = azimuths.stDev(),
-//                                                accelerometer = accelerometerReadings.toList(),
-//                                                gyroscope = gyroscopeReadings.toList(),
-//                                                isFront = isFront
-//                                            )
-
-                                            accelerometerReadings.clear()
-                                            gyroscopeReadings.clear()
-                                        }
-                                        is RangingResultPeerDisconnected -> {
-                                            clientSessionScope = if (isController) {
-                                                uwbManager.controllerSessionScope()
-                                            }
-                                            else {
-                                                uwbManager.controleeSessionScope()
-                                            }
-                                            isStarted = false
-                                            this.cancel()
-                                        }
-                                    }
-                                }
-                            }
-                            catch (e: Exception) {
-                                isStarted = false
-                                Log.e("uwb", e.toString())
-                            }
-                        }
-                    }) {
-                    Text(text = "Start")
+        Spacer(modifier = Modifier.padding(8.dp))
+        if (!isStarted) {
+            MyOutlinedButton(onClick = {
+                if (address.isNotBlank()) {
+                    if (isController) {
+                        UwbManagerSingleton.startSession(address, "0")
+                    } else {
+                        UwbManagerSingleton.startSession(address, preamble)
+                    }
                 }
+            }) {
+                Text(text = "Start")
+            }
+        } else {
+            MyOutlinedButton(onClick = {
+                UwbManagerSingleton.stopSession()
+            }) {
+                Text(text = "Stop")
             }
         }
 
         Spacer(modifier = Modifier.padding(8.dp))
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            UwbDataView(
-                getDistance = {
-                    return@UwbDataView distance
-                },
-                getAzimuth = {
-                    return@UwbDataView azimuth
-                },
-                getStDev = {
-                    return@UwbDataView azimuths.stDev()
-//                    return@UwbDataView -1.0
-                }
-            )
+            UwbDataView()
             Spacer(modifier = Modifier.padding(8.dp))
-            GyroscopeView(
-                context,
-                setGyroscope = {
-                    gyroscopeReadings.add(it)
-                }
-            )
+            GyroscopeView(context)
         }
-        Spacer(modifier = Modifier.padding(8.dp))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            AccelerometerView(
-                context,
-                setAccelerometer = {
-                    accelerometerReadings.add(it)
-                }
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
-            RotationView(
-                context,
-                setCompass = {
-                    compassReadings.add(it)
-                }
-            )
-        }
-        Spacer(modifier = Modifier.padding(8.dp))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            ArrowView(getAz = {
-                azimuth
-            })
-//            Spacer(modifier = Modifier.padding(8.dp))
-//            MyOutlinedButton(
-//                onClick = {
-//                    isFront = !isFront
-//                }
-//            ) {
-//                Text("is front: $isFront")
-//            }
-        }
-    }
-    BackHandler {
-        setState(UserState.InMainMenu)
-    }
 
-    val userState = getState().value
-    when (userState) {
-        is UserState.InMainMenu -> {
-            LaunchedEffect(Unit) {
-                onNavigateToMainMenu()
-            }
+        Spacer(modifier = Modifier.padding(8.dp))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            AccelerometerView(context)
+            Spacer(modifier = Modifier.padding(8.dp))
+            RotationView(context)
         }
-        else -> {}
+
+        BackHandler {
+            setState(UserState.InMainMenu)
+        }
+
+        val userState = getState().value
+        when (userState) {
+            is UserState.InMainMenu -> {
+                LaunchedEffect(Unit) {
+                    onNavigateToMainMenu()
+                }
+            }
+
+            else -> {}
+        }
     }
 }
-
 fun List<Float>.stDev(): Double {
     var result = 0.0
     for (value in this) {

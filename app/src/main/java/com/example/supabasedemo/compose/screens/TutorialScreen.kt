@@ -10,30 +10,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.supabasedemo.compose.viewModels.MainViewModel
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.MyOutlinedButton
-import com.example.supabasedemo.ui.theme.MyOutlinedTextField
-import com.example.supabasedemo.ui.theme.PrimaryContainer
 import com.example.supabasedemo.ui.theme.Typography
-import kotlinx.datetime.format.Padding
 
 @Composable
 fun TutorialScreen(
@@ -41,8 +31,6 @@ fun TutorialScreen(
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit
 ){
-    val viewModel = MainViewModel(LocalContext.current, setState = { setState(it) })
-
     LaunchedEffect(Unit) {
         setState(UserState.InTutorial)
     }
@@ -147,7 +135,7 @@ fun TutorialScreen(
                     )
                     Spacer(modifier = Modifier.padding(4.dp))
                     Text(
-                        text = "Points are deducted if movement of the player is detected or if a red circle is tapped."
+                        text = "Points are deducted if movement of the player is detected or a different object is tapped."
                     )
                 }
             }
