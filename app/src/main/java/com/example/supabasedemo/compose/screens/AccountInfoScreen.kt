@@ -21,8 +21,6 @@ import com.example.supabasedemo.compose.viewModels.MainViewModel
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.MyOutlinedButton
-import io.github.jan.supabase.auth.user.UserInfo
-import kotlinx.serialization.serializer
 
 @Composable
 fun AccountInfoScreen(
@@ -62,7 +60,6 @@ fun AccountInfoScreen(
             Text(text = "Back to Settings")
         }
 
-        //TODO: add everywhere going a page back
         BackHandler {
             setState(UserState.InSettings)
         }
@@ -76,6 +73,5 @@ fun AccountInfoScreen(
             }
             else -> {}
         }
-
     }
 }
