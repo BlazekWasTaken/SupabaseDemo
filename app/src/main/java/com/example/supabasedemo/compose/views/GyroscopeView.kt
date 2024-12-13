@@ -47,7 +47,7 @@ fun GyroscopeView(
                     val diff = nowMark - lastMark
                     lastMark = nowMark
 
-                    Log.e("gyroscope", "gyroscope :) ${gyroscope.x} ${gyroscope.y} ${gyroscope.z} ${diff.inWholeMilliseconds}ms")
+//                    Log.e("gyroscope", "gyroscope :) ${gyroscope.x} ${gyroscope.y} ${gyroscope.z} ${diff.inWholeMilliseconds}ms")
                     setGyroscope(Reading(event.values[0], event.values[1], event.values[2]))
                 }
             }

@@ -283,8 +283,6 @@ fun UwbScreen(
 //                                                isFront = isFront
 //                                            )
 
-
-
                                             accelerometerReadings.clear()
                                             gyroscopeReadings.clear()
                                         }

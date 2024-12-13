@@ -47,7 +47,7 @@ fun AccelerometerView(
                     val diff = nowMark - lastMark
                     lastMark = nowMark
 
-                    Log.e("accelerometer", "accelerometer :) ${acceleration.x} ${acceleration.y} ${acceleration.z} ${diff.inWholeMilliseconds}ms")
+//                    Log.e("accelerometer", "accelerometer :) ${acceleration.x} ${acceleration.y} ${acceleration.z} ${diff.inWholeMilliseconds}ms")
                     setAccelerometer(Reading(event.values[0], event.values[1], event.values[2]))
                 }
             }
