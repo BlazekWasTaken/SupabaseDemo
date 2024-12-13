@@ -1,15 +1,12 @@
 package com.example.supabasedemo.compose.screens
 
-import UwbManagerSingleton
+import com.example.supabasedemo.data.network.UwbManagerSingleton
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,8 +20,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,32 +30,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.uwb.RangingParameters
-import androidx.core.uwb.RangingResult.RangingResultPeerDisconnected
-import androidx.core.uwb.RangingResult.RangingResultPosition
-import androidx.core.uwb.UwbAddress
-import androidx.core.uwb.UwbClientSessionScope
-import androidx.core.uwb.UwbComplexChannel
-import androidx.core.uwb.UwbControleeSessionScope
-import androidx.core.uwb.UwbControllerSessionScope
-import androidx.core.uwb.UwbDevice
-import androidx.core.uwb.UwbManager
 import com.example.supabasedemo.compose.viewModels.MainViewModel
 import com.example.supabasedemo.compose.views.AccelerometerView
 import com.example.supabasedemo.compose.views.GyroscopeView
 import com.example.supabasedemo.compose.views.RotationView
 import com.example.supabasedemo.compose.views.UwbDataView
 import com.example.supabasedemo.data.model.UserState
-import com.example.supabasedemo.ui.theme.AppTheme
 import com.example.supabasedemo.ui.theme.MyOutlinedButton
 import com.example.supabasedemo.ui.theme.MyOutlinedTextField
-import com.google.common.primitives.Shorts
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import java.util.Locale
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -207,21 +184,4 @@ fun UwbScreen(
             else -> {}
         }
     }
-}
-fun List<Float>.stDev(): Double {
-    var result = 0.0
-    for (value in this) {
-        result += (value - this.average()).pow(2)
-    }
-    result /= this.count()
-    result = sqrt(result)
-    return result
-}
-
-fun List<Float>.between(lowInclusive: Double, highInclusive: Double): List<Double> {
-    val result: ArrayList<Double> = ArrayList()
-    for (value in this) {
-        if (value in lowInclusive..highInclusive) result.add(value.toDouble())
-    }
-    return result
 }

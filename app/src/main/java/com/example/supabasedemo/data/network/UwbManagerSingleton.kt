@@ -1,5 +1,9 @@
+package com.example.supabasedemo.data.network
+
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.mutableStateListOf
 import androidx.core.uwb.RangingParameters
 import androidx.core.uwb.RangingResult
 import androidx.core.uwb.RangingResult.RangingResultPeerDisconnected
@@ -7,21 +11,22 @@ import androidx.core.uwb.RangingResult.RangingResultPosition
 import androidx.core.uwb.UwbAddress
 import androidx.core.uwb.UwbClientSessionScope
 import androidx.core.uwb.UwbComplexChannel
-import androidx.core.uwb.UwbControleeSessionScope
 import androidx.core.uwb.UwbControllerSessionScope
 import androidx.core.uwb.UwbDevice
 import androidx.core.uwb.UwbManager
+import com.example.supabasedemo.compose.views.Reading
+import com.example.supabasedemo.utils.TfLiteModel
 import com.google.common.primitives.Shorts
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 object UwbManagerSingleton {
 
@@ -39,18 +44,29 @@ object UwbManagerSingleton {
     private val _preamble = MutableStateFlow("-2")
     val preamble: StateFlow<String> get() = _preamble
 
-    private val _distance = MutableStateFlow(-1.0)
-    val distance: StateFlow<Double> get() = _distance
-    private val _azimuth = MutableStateFlow(-1.0)
-    val azimuth: StateFlow<Double> get() = _azimuth
+    private val _distances = mutableListOf<Float>()
+    private val _distance = MutableStateFlow(-1F)
+    val distance: StateFlow<Float> get() = _distance
+
+    private val _azimuths = mutableListOf<Float>()
+    private val _azimuth = MutableStateFlow(-1F)
+    val azimuth: StateFlow<Float> get() = _azimuth
+    private var _isFront: Boolean = !isController
+
+    private val _accelerometerReadings = mutableStateListOf(Reading(0F, 0F, 0F))
+    private val _gyroscopeReadings = mutableStateListOf(Reading(0F, 0F, 0F))
 
     private var initializationDeferred: CompletableDeferred<Unit>? = null
 
+    @SuppressLint("StaticFieldLeak")
+    private var model: TfLiteModel? = null
+
     fun initialize(context: Context, isController: Boolean) {
         stopSession()
-        this.isController = isController
+        UwbManagerSingleton.isController = isController
         uwbManager = UwbManager.createInstance(context)
         initializationDeferred = CompletableDeferred()
+        model = TfLiteModel(context)
 
         // TODO mv it to separate dispatchable job
         CoroutineScope(Dispatchers.Main).launch {
@@ -73,7 +89,7 @@ object UwbManagerSingleton {
     }
 
     fun setRoleAsController(isController: Boolean, context: Context) {
-        if (this.isController != isController) {
+        if (UwbManagerSingleton.isController != isController) {
             initialize(context, isController)
         }
     }
@@ -134,9 +150,14 @@ object UwbManagerSingleton {
     private fun handleRangingResult(result: RangingResult) {
         when (result) {
             is RangingResultPosition -> {
-                _distance.value = result.position.distance?.value?.toDouble() ?: -1.0
-                _azimuth.value = result.position.azimuth?.value?.toDouble() ?: -1.0
-                Log.d("uwb", "Distance: ${_distance.value}, Azimuth: ${_azimuth.value}")
+                _accelerometerReadings.clear()
+                _gyroscopeReadings.clear()
+
+                handleDistance(result.position.distance?.value ?: -1F)
+                handleAngle(result.position.azimuth?.value ?: -1F)
+
+
+//                Log.d("uwb", "Distance: ${_distance.value}, Azimuth: ${_azimuth.value}")
             }
 
             is RangingResultPeerDisconnected -> {
@@ -150,6 +171,84 @@ object UwbManagerSingleton {
         }
     }
 
+    private fun handleDistance(
+        distance: Float
+    ) {
+        _distances.add(distance)
+
+        if (_distances.size < 20) return
+
+        _distances.removeAt(0)
+
+        val stDev = _distances.stDev()
+        val goodDistance = _distances.between(_distances.average() - stDev, _distances.average() + stDev).average()
+
+        _distance.value = goodDistance.toFloat()
+    }
+
+    private fun handleAngle(
+        angle: Float
+    ) {
+        _azimuths.add(angle)
+
+        if (_azimuths.size < 20) return
+
+        _azimuths.removeAt(0)
+
+        val stDev = _azimuths.stDev()
+        var goodAngle = _azimuths.between(_azimuths.average() - stDev, _azimuths.average() + stDev).average()
+
+        val testAngle = if (goodAngle < 0) {
+            -goodAngle
+        } else {
+            360 - goodAngle
+        }
+
+        val prediction = predictIsFront(
+            _distance.value,
+            testAngle.toFloat(),
+            stDev,
+            _accelerometerReadings,
+            _gyroscopeReadings
+        )
+
+        if (prediction == null) return
+        Log.d("uwb", prediction.toString())
+
+        _isFront = prediction
+
+        if (_isFront) {
+            goodAngle = if (goodAngle < 0) {
+                -goodAngle
+            } else {
+                360 - goodAngle
+            }
+        } else {
+            goodAngle += 180
+        }
+
+        _azimuth.value = goodAngle.toFloat()
+    }
+
+    fun predictIsFront(
+        distance: Float,
+        angle: Float,
+        stDev: Float,
+        accelerometerReadings: List<Reading>,
+        gyroscopeReadings: List<Reading>) : Boolean?
+    {
+        if (!isStarted) return null
+        if (!_isStartedFlow.value) return null
+
+        return model?.predict(
+            distance,
+            angle,
+            stDev,
+            accelerometerReadings,
+            gyroscopeReadings
+        )
+    }
+
     fun stopSession() {
         if (!isStarted) return
         if (!_isStartedFlow.value) return
@@ -160,8 +259,8 @@ object UwbManagerSingleton {
         isStarted = false
         _isStartedFlow.value = false
 
-        _distance.value = -1.0
-        _azimuth.value = -1.0
+        _distance.value = -1F
+        _azimuth.value = -1F
         _address.value = "-2"
         _preamble.value = "-2"
 
@@ -193,6 +292,20 @@ object UwbManagerSingleton {
         _preamble.value = newPreamble
     }
 
+    fun updateAccelerometerReadings(newReading: Reading) {
+        if (!isStarted) return
+        if (!_isStartedFlow.value) return
+
+        _accelerometerReadings.add(newReading)
+    }
+
+    fun updateGyroscopeReadings(newReading: Reading) {
+        if (!isStarted) return
+        if (!_isStartedFlow.value) return
+
+        _gyroscopeReadings.add(newReading)
+    }
+
     suspend fun getDeviceAddressSafe(): Short {
         waitForInitialization()
         return Shorts.fromByteArray(sessionScope?.localAddress?.address)
@@ -214,4 +327,22 @@ object UwbManagerSingleton {
         updateAddress(newAddress.toString())
         updatePreamble(newPreamble ?: "N/A")
     }
+}
+
+fun List<Float>.stDev(): Float {
+    var result = 0F
+    for (value in this) {
+        result += (value - this.average()).pow(2).toFloat()
+    }
+    result /= this.count()
+    result = sqrt(result)
+    return result
+}
+
+fun List<Float>.between(lowInclusive: Double, highInclusive: Double): List<Float> {
+    val result: ArrayList<Float> = ArrayList()
+    for (value in this) {
+        if (value in lowInclusive..highInclusive) result.add(value)
+    }
+    return result
 }

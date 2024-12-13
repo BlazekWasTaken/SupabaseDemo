@@ -6,12 +6,10 @@ import com.example.supabasedemo.compose.views.Reading
 import kotlinx.io.IOException
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
-import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
-import kotlin.math.log
 
-class TfLiteModel (context: Context){
+data class TfLiteModel(val context: Context) {
     private var interpreter: Interpreter? = null
 
     init {
@@ -23,7 +21,6 @@ class TfLiteModel (context: Context){
         }
     }
 
-    @Throws(IOException::class)
     private fun loadModelFile(context: Context): MappedByteBuffer {
         val fileDescriptor = context.assets.openFd("model.tflite")
         val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
@@ -61,20 +58,11 @@ class TfLiteModel (context: Context){
         }
 
         interpreter?.run(input, output)
-        Log.d("tensorflow",  "${output.size} | ${output[0].size} | ${output[0][0]}"  )
+        Log.d("tensorflow",  "${output[0][0]}")
         return output[0][0] > 0.5
     }
 
-    data class Displacement(
-        val linearDisplacementX: Float,
-        val linearDisplacementY: Float,
-        val linearDisplacementZ: Float,
-        val angularDisplacementX: Float,
-        val angularDisplacementY: Float,
-        val angularDisplacementZ: Float
-    )
-
-    fun calculateDisplacement(
+    private fun calculateDisplacement(
         accelerometerReadings: List<Reading>,
         gyroscopeReadings: List<Reading>,
         dt: Float = 0.1f
@@ -138,3 +126,12 @@ class TfLiteModel (context: Context){
         )
     }
 }
+
+data class Displacement(
+    val linearDisplacementX: Float,
+    val linearDisplacementY: Float,
+    val linearDisplacementZ: Float,
+    val angularDisplacementX: Float,
+    val angularDisplacementY: Float,
+    val angularDisplacementZ: Float
+)

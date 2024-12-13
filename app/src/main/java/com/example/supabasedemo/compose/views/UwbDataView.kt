@@ -1,6 +1,6 @@
 package com.example.supabasedemo.compose.views
 
-import UwbManagerSingleton
+import com.example.supabasedemo.data.network.UwbManagerSingleton
 import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -31,24 +31,24 @@ fun UwbDataView() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Log.e("uwb", "distance $distance angle $azimuth")
+//            Log.e("uwb", "distance $distance angle $azimuth")
             Text(text = "UWB")
-            Text(text = "distance: ${distance.fixDistanceForScreen()}")
-            Text(text = "angle: ${azimuth.fixAngleForScreen()}")
+            Text(text = "distance: ${distance.toFloat().fixDistanceForScreen()}")
+            Text(text = "angle: ${azimuth.toFloat().fixAngleForScreen()}")
         }
     }
 }
 
-private fun Double.fixDistanceForScreen(): String {
-    return if (this != -1.0) {
+private fun Float.fixDistanceForScreen(): String {
+    return if (this != -1F) {
         String.format(Locale.getDefault(), "%.2f", this) + "m"
     } else {
         "Loading..."
     }
 }
 
-private fun Double.fixAngleForScreen(): String {
-    return if (this != -1.0) {
+private fun Float.fixAngleForScreen(): String {
+    return if (this != -1F) {
         String.format(Locale.getDefault(), "%.0f", this) + "\u00B0"
     } else {
         "Loading..."
