@@ -287,37 +287,49 @@ class MainActivity : ComponentActivity() {
     // region objects
     @Serializable
     object LoginProcess
+
     @Serializable
     object LoginChoice
+
     @Serializable
     object Login
+
     @Serializable
     object Signup
 
     @Serializable
     object MainMenu
+
     @Serializable
     object Menu
+
     @Serializable
     object Stats
+
     @Serializable
     object Tutorial
+
     @Serializable
     object MiniGame
 
     @Serializable
     object Settings
+
     @Serializable
     object SettingsMenu
+
     @Serializable
     object AccountInfo
+
     @Serializable
     object Theme
+
     @Serializable
     object Demo
 
     @Serializable
     object Game
+
     @Serializable
     object GameStart
     // endregion
