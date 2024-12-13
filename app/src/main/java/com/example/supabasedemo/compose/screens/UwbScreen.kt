@@ -206,6 +206,22 @@ fun UwbScreen(
 
             else -> {}
         }
-
     }
+}
+fun List<Float>.stDev(): Double {
+    var result = 0.0
+    for (value in this) {
+        result += (value - this.average()).pow(2)
+    }
+    result /= this.count()
+    result = sqrt(result)
+    return result
+}
+
+fun List<Float>.between(lowInclusive: Double, highInclusive: Double): List<Double> {
+    val result: ArrayList<Double> = ArrayList()
+    for (value in this) {
+        if (value in lowInclusive..highInclusive) result.add(value.toDouble())
+    }
+    return result
 }

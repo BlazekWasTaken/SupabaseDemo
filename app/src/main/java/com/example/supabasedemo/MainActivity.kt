@@ -201,7 +201,6 @@ class MainActivity : ComponentActivity() {
                         setState = {
                             setState(it)
                         })
-
                 }
             }
             navigation<Settings>(startDestination = SettingsMenu) {

@@ -32,7 +32,6 @@ class SupabaseRealtimeHelper(
     val setState: (UserState) -> Unit,
     private val context: Context,
 ) {
-    @OptIn(SupabaseExperimental::class)
     suspend fun subscribeToGame(uuid: String, onGameUpdate: (Game) -> Unit) {
         val channel = client.channel("games_channel") {}
 
@@ -65,5 +64,3 @@ class SupabaseRealtimeHelper(
         channel.subscribe()
     }
 }
-
-

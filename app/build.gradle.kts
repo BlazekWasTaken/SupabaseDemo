@@ -66,9 +66,8 @@ dependencies {
     implementation(libs.realtime.kt)
     implementation(libs.postgrest.kt)
     implementation(libs.ktor.client.okhttp)
-
-    //noinspection UseTomlInstead
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    
+    implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.zxing.android.embedded)
     implementation(libs.barcode.scanning)
     implementation(libs.androidx.camera.camera2)
@@ -76,8 +75,12 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.mlkit.vision)
-    implementation("com.google.guava:guava:31.0.1-android")
-    implementation("androidx.core.uwb:uwb:1.0.0-alpha09")
+    implementation(libs.guava)
+    implementation(libs.androidx.uwb)
 
     implementation(libs.androidx.core.splashscreen)
+
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.support)
+    implementation(libs.tensorflow.lite.metadata)
 }

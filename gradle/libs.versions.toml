@@ -1,18 +1,24 @@
 [versions]
-agp = "8.7.2"
+agp = "8.7.3"
 barcodeScanning = "17.3.0"
-cameraCamera2 = "1.4.0"
+cameraCamera2 = "1.4.1"
 coreSplashscreen = "1.0.1"
+guava = "31.1-android"
 kotlin = "2.0.0"
 coreKtx = "1.15.0"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
-composeBom = "2024.11.00"
-composeNavigation = "2.8.4"
+composeBom = "2024.12.01"
+composeNavigation = "2.8.5"
+lifecycleViewmodelCompose = "2.8.7"
 serialization = "1.7.3"
 
 ktorClientOkhttp = "3.0.0"
 bom = "3.0.2"
+tensorflowLite = "2.5.0"
+tensorflowLiteMetadata = "0.1.0"
+tensorflowLiteSupport = "0.1.0"
+uwb = "1.0.0-alpha10"
 zxingAndroidEmbedded = "4.1.0"
 
 [libraries]
@@ -30,6 +36,9 @@ androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-uwb = { module = "androidx.core.uwb:uwb", version.ref = "uwb" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "composeNavigation" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization"}
 
@@ -39,6 +48,9 @@ bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bom" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktorClientOkhttp" }
 postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt" }
+tensorflow-lite = { module = "org.tensorflow:tensorflow-lite", version.ref = "tensorflowLite" }
+tensorflow-lite-metadata = { module = "org.tensorflow:tensorflow-lite-metadata", version.ref = "tensorflowLiteMetadata" }
+tensorflow-lite-support = { module = "org.tensorflow:tensorflow-lite-support", version.ref = "tensorflowLiteSupport" }
 zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
 
 [plugins]
