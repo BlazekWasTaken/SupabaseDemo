@@ -1,6 +1,7 @@
 import android.content.Context
 import android.util.Log
 import androidx.core.uwb.RangingParameters
+import androidx.core.uwb.RangingResult
 import androidx.core.uwb.RangingResult.RangingResultPeerDisconnected
 import androidx.core.uwb.RangingResult.RangingResultPosition
 import androidx.core.uwb.UwbAddress
@@ -15,6 +16,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -22,35 +25,41 @@ import kotlinx.coroutines.runBlocking
 object UwbManagerSingleton {
 
     private var uwbManager: UwbManager? = null
-    private var clientSessionScope: UwbClientSessionScope? = null
-    private var controllerSessionScope: UwbControllerSessionScope? = null
-    private var controleeSessionScope: UwbControleeSessionScope? = null
+    private var sessionScope: UwbClientSessionScope? = null
     private var isController: Boolean = true
+
     private var isStarted: Boolean = false
+    private val _isStartedFlow = MutableStateFlow(false)
+    val isStartedFlow: StateFlow<Boolean> = _isStartedFlow
+
+    private val _address = MutableStateFlow("-2")
+    val address: StateFlow<String> get() = _address
+    private val _preamble = MutableStateFlow("-2")
+    val preamble: StateFlow<String> get() = _preamble
+
     private var distance: Double = -1.0
     private var azimuth: Double = -1.0
 
     private var initializationDeferred: CompletableDeferred<Unit>? = null
 
-    fun initialize(context: Context) {
+    fun initialize(context: Context, isController: Boolean) {
+        stopSession()
+        this.isController = isController
         uwbManager = UwbManager.createInstance(context)
         initializationDeferred = CompletableDeferred()
 
-        CoroutineScope(Dispatchers.Main.immediate).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             try {
-                controllerSessionScope = uwbManager?.controllerSessionScope()
-                controleeSessionScope = uwbManager?.controleeSessionScope()
-
-                if (controllerSessionScope == null) {
-                    Log.e("uwb", "Controller session not initialized")
-                }
-                if (controleeSessionScope == null) {
-                    Log.e("uwb", "Controlee session not initialized")
+                sessionScope = if (isController) {
+                    uwbManager?.controllerSessionScope()
+                } else {
+                    uwbManager?.controleeSessionScope()
                 }
 
+                if (sessionScope == null) throw IllegalStateException("Session initialization failed")
                 initializationDeferred?.complete(Unit)
-                Log.d("uwb", "Device address ${getDeviceAddress()}")
-                Log.d("uwb", "Device preamble ${getDevicePreamble()}")
+                fetchDeviceDetails()
+                Log.d("uwb", "Initialized as ${if (isController) "Controller" else "Controlee"}")
             } catch (e: Exception) {
                 Log.e("uwb", "Error during session initialization: ${e.message}")
                 initializationDeferred?.completeExceptionally(e)
@@ -58,38 +67,34 @@ object UwbManagerSingleton {
         }
     }
 
-    fun setController(isController: Boolean) {
-        this.isController = isController
+    fun setRoleAsController(isController: Boolean, context: Context) {
+        if (this.isController != isController) {
+            initialize(context, isController)
+        }
     }
 
-    fun startSession(address: String, preamble: String) {
-        if (isStarted) return
+    fun startSession(partnerAddress: String, preamble: String) {
+        if (_isStartedFlow.value) return
 
         runBlocking { waitForInitialization() }
 
         Log.d(
             "uwb",
-            "Starting UWB session - Address: $address Preamble: $preamble IsController: $isController DeviceAddress: ${getDeviceAddress()} DevicePreamble: ${getDevicePreamble()}"
+            "Starting UWB session - Address: $partnerAddress Preamble: $preamble IsController: $isController DeviceAddress: ${getDeviceAddress()} DevicePreamble: ${getDevicePreamble()}"
         )
 
-        val partnerAddress = UwbAddress(Shorts.toByteArray(address.toShort()))
+        val partnerUwbAddress = UwbAddress(Shorts.toByteArray(partnerAddress.toShort()))
 
-        val sessionScope: UwbClientSessionScope?
-        val uwbComplexChannel: UwbComplexChannel?
-
-
-        if (isController) {
-            sessionScope = controllerSessionScope
-            uwbComplexChannel = controllerSessionScope?.uwbComplexChannel
+        val uwbComplexChannel = if (isController) {
+            (sessionScope as? UwbControllerSessionScope)?.uwbComplexChannel
         } else {
-            sessionScope = controleeSessionScope
-            uwbComplexChannel = UwbComplexChannel(9, preamble.toInt())
+            UwbComplexChannel(9, preamble.toInt())
         }
 
         if (sessionScope == null) {
             Log.e(
                 "uwb",
-                "sessionScope is null for ${if (isController) "Controller" else "Controlee"}"
+                "Session scope is null for ${if (isController) "Controller" else "Controlee"}"
             )
             return
         }
@@ -98,100 +103,106 @@ object UwbManagerSingleton {
             uwbConfigType = RangingParameters.CONFIG_UNICAST_DS_TWR,
             sessionId = 12345,
             subSessionId = 0,
-            sessionKeyInfo = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0),
+            sessionKeyInfo = ByteArray(8),
             subSessionKeyInfo = null,
             complexChannel = uwbComplexChannel,
-            peerDevices = listOf(UwbDevice(partnerAddress)),
+            peerDevices = listOf(UwbDevice(partnerUwbAddress)),
             updateRateType = RangingParameters.RANGING_UPDATE_RATE_FREQUENT
         )
 
-        val sessionFlow = sessionScope.prepareSession(rangingParameters)
-
-        isStarted = true
-        Log.d("uwb", "Totally UWB Session started")
-        CoroutineScope(Dispatchers.Main.immediate).launch {
-            Log.d("uwb", "Collecting session flow")
+        CoroutineScope(Dispatchers.Main).launch {
             try {
-                sessionFlow.collect { result ->
-                    Log.d("uwb-result", "Result: $result")
-                    when (result) {
-                        is RangingResultPosition -> {
-                            // Process position and distance
-                            distance = result.position.distance?.value?.toDouble() ?: -1.0
-                            azimuth = result.position.azimuth?.value?.toDouble() ?: -1.0
-
-                            Log.d("uwb", "Distance: $distance Azimuth: $azimuth")
-                        }
-
-                        is RangingResultPeerDisconnected -> {
-                            Log.e("uwb", "Session flow disconnected event: $result.")
-                            stopSession()
-                        }
-
-                        else -> {
-                            Log.e("uwb", "Unexpected session flow event: $result")
-                        }
-                    }
+                sessionScope?.prepareSession(rangingParameters)?.collect { result ->
+                    handleRangingResult(result)
                 }
             } catch (e: Exception) {
-                Log.e("uwb", "Error collecting session flow: ${e.message}", e)
+                Log.e("uwb", "Error during session collection: ${e.message}", e)
                 stopSession()
+            }
+        }
+
+        isStarted = true
+        _isStartedFlow.value = true
+        Log.d("uwb", "Session started successfully.")
+    }
+
+    private fun handleRangingResult(result: RangingResult) {
+        when (result) {
+            is RangingResultPosition -> {
+                distance = result.position.distance?.value?.toDouble() ?: -1.0
+                azimuth = result.position.azimuth?.value?.toDouble() ?: -1.0
+                Log.d("uwb", "Distance: $distance, Azimuth: $azimuth")
+            }
+
+            is RangingResultPeerDisconnected -> {
+                Log.e("uwb", "Peer disconnected: $result")
+                stopSession()
+            }
+
+            else -> {
+                Log.e("uwb", "Unexpected result: $result")
             }
         }
     }
 
     fun stopSession() {
         if (!isStarted) return
+        if (!_isStartedFlow.value) return
+
         isStarted = false
+        _isStartedFlow.value = false
+
         Log.d("uwb", "Stopping UWB session")
-        CoroutineScope(Dispatchers.IO).launch {
-            clientSessionScope = if (isController) {
-                uwbManager?.controllerSessionScope()
-            } else {
-                uwbManager?.controleeSessionScope()
-            }
-        }
+        sessionScope = null
     }
 
     fun getDistance(): Double = distance
     fun getAzimuth(): Double = azimuth
 
-    fun getDeviceAddress(): String {
-        return if (isController) {
-            controllerSessionScope?.localAddress?.toString() ?: "Controller session not initialized"
-        } else {
-            controleeSessionScope?.localAddress?.toString() ?: "Controlee session not initialized"
-        }
+    private suspend fun waitForInitialization() {
+        initializationDeferred?.await()
     }
 
-    fun getDevicePreamble(): String {
+    private fun getDeviceAddress(): String {
+        return sessionScope?.localAddress?.toString() ?: "Session scope not initialized"
+    }
+
+    private fun getDevicePreamble(): String {
         return if (isController) {
-            controllerSessionScope?.uwbComplexChannel?.preambleIndex?.toString()
+            (sessionScope as? UwbControllerSessionScope)?.uwbComplexChannel?.preambleIndex?.toString()
                 ?: "Preamble not available"
         } else {
-            "Preamble is not required for Controlee"
+            "N/A for Controlee"
         }
     }
 
-    suspend fun waitForInitialization() {
-        initializationDeferred?.await()
+    fun updateAddress(newAddress: String) {
+        _address.value = newAddress
+    }
+
+    fun updatePreamble(newPreamble: String) {
+        _preamble.value = newPreamble
     }
 
     suspend fun getDeviceAddressSafe(): Short {
         waitForInitialization()
-        return if (isController) {
-            Shorts.fromByteArray(controllerSessionScope?.localAddress?.address)
-        } else {
-            Shorts.fromByteArray(controleeSessionScope?.localAddress?.address)
-        }
+        return Shorts.fromByteArray(sessionScope?.localAddress?.address)
     }
 
     suspend fun getDevicePreambleSafe(): String? {
         waitForInitialization()
         return if (isController) {
-            controllerSessionScope?.uwbComplexChannel?.preambleIndex?.toString()
+            (sessionScope as? UwbControllerSessionScope)?.uwbComplexChannel?.preambleIndex?.toString()
         } else {
             "N/A"
         }
+    }
+
+    suspend fun fetchDeviceDetails() {
+        val newAddress = getDeviceAddressSafe()
+        val newPreamble = getDevicePreambleSafe()
+
+        updateAddress(newAddress.toString())
+        updatePreamble(newPreamble ?: "N/A")
     }
 }

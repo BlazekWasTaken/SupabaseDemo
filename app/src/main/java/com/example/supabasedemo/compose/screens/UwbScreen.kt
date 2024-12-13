@@ -1,5 +1,6 @@
 package com.example.supabasedemo.compose.screens
 
+import UwbManagerSingleton
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -20,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -77,16 +79,17 @@ fun UwbScreen(
     val viewModel = MainViewModel(context, setState = { setState(it) })
 
     var isController by remember { mutableStateOf(true) }
-    var isStarted by remember { mutableStateOf(false) }
+
+    val isStarted by UwbManagerSingleton.isStartedFlow.collectAsState(initial = false)
     var address by remember { mutableStateOf("") }
     var preamble by remember { mutableStateOf("") }
-    var deviceAddress by remember { mutableStateOf("") }
-    var devicePreamble by remember { mutableStateOf("") }
+    val deviceAddress by UwbManagerSingleton.address.collectAsState(initial = "-1")
+    val devicePreamble by UwbManagerSingleton.preamble.collectAsState(initial = "-1")
 
     var permissionGranted by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        UwbManagerSingleton.initialize(context)
+        UwbManagerSingleton.initialize(context, isController)
 
         permissionGranted = ContextCompat.checkSelfPermission(
             context, Manifest.permission.UWB_RANGING
@@ -97,11 +100,8 @@ fun UwbScreen(
             )
         }
 
-        deviceAddress = UwbManagerSingleton.getDeviceAddressSafe().toString()
-        devicePreamble = UwbManagerSingleton.getDevicePreambleSafe().toString()
+        UwbManagerSingleton.fetchDeviceDetails()
     }
-
-
 
     Column(
         modifier = Modifier
@@ -118,7 +118,7 @@ fun UwbScreen(
             Spacer(modifier = Modifier.padding(8.dp))
             Switch(checked = isController, onCheckedChange = {
                 isController = it
-                UwbManagerSingleton.setController(it)
+                UwbManagerSingleton.setRoleAsController(it, context)
                 UwbManagerSingleton.stopSession()
             })
         }
@@ -130,9 +130,8 @@ fun UwbScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
         )
 
-        Spacer(modifier = Modifier.padding(8.dp))
-
         if (!isController) {
+            Spacer(modifier = Modifier.padding(8.dp))
             MyOutlinedTextField(
                 value = preamble,
                 onValueChange = { preamble = it },
@@ -147,28 +146,27 @@ fun UwbScreen(
         if (isController) {
             Text(text = "Your Preamble: $devicePreamble")
         }
+
         Spacer(modifier = Modifier.padding(8.dp))
 
+        Spacer(modifier = Modifier.padding(8.dp))
         if (!isStarted) {
-            Spacer(modifier = Modifier.padding(8.dp))
             MyOutlinedButton(onClick = {
-                CoroutineScope(Dispatchers.Main.immediate).launch {
-                    try {
-                        if (address.isNotBlank()) {
-                            if (isController) {
-                                UwbManagerSingleton.startSession(address, "0")
-                            } else {
-                                UwbManagerSingleton.startSession(address, preamble)
-                            }
-                            isStarted = true
-                        }
-                    } catch (e: Exception) {
-                        isStarted = false
-                        Log.e("uwb", "UWB-Screen Failed $e")
+                if (address.isNotBlank()) {
+                    if (isController) {
+                        UwbManagerSingleton.startSession(address, "0")
+                    } else {
+                        UwbManagerSingleton.startSession(address, preamble)
                     }
                 }
             }) {
                 Text(text = "Start")
+            }
+        } else {
+            MyOutlinedButton(onClick = {
+                UwbManagerSingleton.stopSession()
+            }) {
+                Text(text = "Stop")
             }
         }
 
