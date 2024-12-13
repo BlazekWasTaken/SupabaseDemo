@@ -16,6 +16,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -27,6 +28,7 @@ object UwbManagerSingleton {
     private var uwbManager: UwbManager? = null
     private var sessionScope: UwbClientSessionScope? = null
     private var isController: Boolean = true
+    private var sessionJob: Job? = null
 
     private var isStarted: Boolean = false
     private val _isStartedFlow = MutableStateFlow(false)
@@ -37,8 +39,10 @@ object UwbManagerSingleton {
     private val _preamble = MutableStateFlow("-2")
     val preamble: StateFlow<String> get() = _preamble
 
-    private var distance: Double = -1.0
-    private var azimuth: Double = -1.0
+    private val _distance = MutableStateFlow(-1.0)
+    val distance: StateFlow<Double> get() = _distance
+    private val _azimuth = MutableStateFlow(-1.0)
+    val azimuth: StateFlow<Double> get() = _azimuth
 
     private var initializationDeferred: CompletableDeferred<Unit>? = null
 
@@ -48,6 +52,7 @@ object UwbManagerSingleton {
         uwbManager = UwbManager.createInstance(context)
         initializationDeferred = CompletableDeferred()
 
+        // TODO mv it to separate dispatchable job
         CoroutineScope(Dispatchers.Main).launch {
             try {
                 sessionScope = if (isController) {
@@ -110,7 +115,7 @@ object UwbManagerSingleton {
             updateRateType = RangingParameters.RANGING_UPDATE_RATE_FREQUENT
         )
 
-        CoroutineScope(Dispatchers.Main).launch {
+        sessionJob = CoroutineScope(Dispatchers.Main).launch {
             try {
                 sessionScope?.prepareSession(rangingParameters)?.collect { result ->
                     handleRangingResult(result)
@@ -129,9 +134,9 @@ object UwbManagerSingleton {
     private fun handleRangingResult(result: RangingResult) {
         when (result) {
             is RangingResultPosition -> {
-                distance = result.position.distance?.value?.toDouble() ?: -1.0
-                azimuth = result.position.azimuth?.value?.toDouble() ?: -1.0
-                Log.d("uwb", "Distance: $distance, Azimuth: $azimuth")
+                _distance.value = result.position.distance?.value?.toDouble() ?: -1.0
+                _azimuth.value = result.position.azimuth?.value?.toDouble() ?: -1.0
+                Log.d("uwb", "Distance: ${_distance.value}, Azimuth: ${_azimuth.value}")
             }
 
             is RangingResultPeerDisconnected -> {
@@ -149,15 +154,19 @@ object UwbManagerSingleton {
         if (!isStarted) return
         if (!_isStartedFlow.value) return
 
+        sessionJob?.cancel()
+        sessionJob = null
+
         isStarted = false
         _isStartedFlow.value = false
 
-        Log.d("uwb", "Stopping UWB session")
-        sessionScope = null
-    }
+        _distance.value = -1.0
+        _azimuth.value = -1.0
+        _address.value = "-2"
+        _preamble.value = "-2"
 
-    fun getDistance(): Double = distance
-    fun getAzimuth(): Double = azimuth
+        Log.d("uwb", "Session stopped and resources released")
+    }
 
     private suspend fun waitForInitialization() {
         initializationDeferred?.await()
