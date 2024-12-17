@@ -29,6 +29,9 @@ object SensorManagerSingleton {
     private val _magnetometerReadingsFlow = MutableStateFlow(listOf(Reading(0F, 0F, 0F)))
     val magnetometerReadingsFlow: StateFlow<List<Reading>> get() = _magnetometerReadingsFlow
 
+    private val _compassReadingsFlow = MutableStateFlow(listOf(0F))
+    val compassReadingsFlow: StateFlow<List<Float>> get() = _compassReadingsFlow
+
     private var initializationDeferred: CompletableDeferred<Unit>? = null
 
     fun initialize(context: Context) {
@@ -41,6 +44,7 @@ object SensorManagerSingleton {
             sensorManager!!.registerAccelerometer()
             sensorManager!!.registerGyroscope()
             sensorManager!!.registerMagnetometer()
+            sensorManager!!.registerOrientation()
 
             initializationDeferred?.complete(Unit)
             isStarted = true
@@ -127,6 +131,26 @@ object SensorManagerSingleton {
                 if (event == null) return
                 val reading = Reading(event.values[0], event.values[1], event.values[2])
                 _magnetometerReadingsFlow.value += reading
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+            }
+        }
+        this.registerListener(
+            sensorEventListener,
+            magnetometer,
+            50000
+        )
+    }
+
+    private fun SensorManager.registerOrientation() {
+        if (sensorManager == null) throw Exception()
+        val magnetometer: Sensor? = sensorManager!!.getDefaultSensor(Sensor.TYPE_ORIENTATION)
+
+        val sensorEventListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                if (event == null) return
+                _compassReadingsFlow.value += event.values[0]
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
