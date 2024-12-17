@@ -38,8 +38,6 @@ import com.example.supabasedemo.compose.views.UwbDataView
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.ui.theme.MyOutlinedButton
 import com.example.supabasedemo.ui.theme.MyOutlinedTextField
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable

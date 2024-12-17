@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getSystemService
+import com.example.supabasedemo.data.network.Reading
 import com.example.supabasedemo.data.network.UwbManagerSingleton
 import com.example.supabasedemo.ui.theme.AppTheme
 import java.util.Locale
@@ -123,9 +124,3 @@ private fun Float.fixForScreen(): String {
         " " + String.format(Locale.getDefault(), "%.0f", this) + "\u00B0"
     }
 }
-
-class Reading(
-    val x: Float,
-    val y: Float,
-    val z: Float,
-)

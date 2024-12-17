@@ -2,7 +2,7 @@ package com.example.supabasedemo.utils
 
 import android.content.Context
 import android.util.Log
-import com.example.supabasedemo.compose.views.Reading
+import com.example.supabasedemo.data.network.Reading
 import kotlinx.io.IOException
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream

@@ -3,7 +3,6 @@ package com.example.supabasedemo.data.network
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
 import androidx.core.uwb.RangingParameters
 import androidx.core.uwb.RangingResult
 import androidx.core.uwb.RangingResult.RangingResultPeerDisconnected
@@ -14,7 +13,6 @@ import androidx.core.uwb.UwbComplexChannel
 import androidx.core.uwb.UwbControllerSessionScope
 import androidx.core.uwb.UwbDevice
 import androidx.core.uwb.UwbManager
-import com.example.supabasedemo.compose.views.Reading
 import com.example.supabasedemo.utils.TfLiteModel
 import com.google.common.primitives.Shorts
 import kotlinx.coroutines.CompletableDeferred
@@ -52,9 +50,6 @@ object UwbManagerSingleton {
     private val _azimuth = MutableStateFlow(-1F)
     val azimuth: StateFlow<Float> get() = _azimuth
     private var _isFront: Boolean = !isController
-
-    private val _accelerometerReadings = mutableStateListOf(Reading(0F, 0F, 0F))
-    private val _gyroscopeReadings = mutableStateListOf(Reading(0F, 0F, 0F))
 
     private var initializationDeferred: CompletableDeferred<Unit>? = null
 
@@ -150,12 +145,8 @@ object UwbManagerSingleton {
     private fun handleRangingResult(result: RangingResult) {
         when (result) {
             is RangingResultPosition -> {
-                _accelerometerReadings.clear()
-                _gyroscopeReadings.clear()
-
                 handleDistance(result.position.distance?.value ?: -1F)
                 handleAngle(result.position.azimuth?.value ?: -1F)
-
 
 //                Log.d("uwb", "Distance: ${_distance.value}, Azimuth: ${_azimuth.value}")
             }
@@ -204,18 +195,18 @@ object UwbManagerSingleton {
             360 - goodAngle
         }
 
-        val prediction = predictIsFront(
-            _distance.value,
-            testAngle.toFloat(),
-            stDev,
-            _accelerometerReadings,
-            _gyroscopeReadings
-        )
+//        val prediction = predictIsFront(
+//            _distance.value,
+//            testAngle.toFloat(),
+//            stDev,
+//            _accelerometerReadings,
+//            _gyroscopeReadings
+//        )
 
-        if (prediction == null) return
-        Log.d("uwb", prediction.toString())
+//        if (prediction == null) return
+//        Log.d("uwb", prediction.toString())
 
-        _isFront = prediction
+        _isFront = true
 
         if (_isFront) {
             goodAngle = if (goodAngle < 0) {
@@ -296,14 +287,14 @@ object UwbManagerSingleton {
         if (!isStarted) return
         if (!_isStartedFlow.value) return
 
-        _accelerometerReadings.add(newReading)
+//        _accelerometerReadings.add(newReading)
     }
 
     fun updateGyroscopeReadings(newReading: Reading) {
         if (!isStarted) return
         if (!_isStartedFlow.value) return
 
-        _gyroscopeReadings.add(newReading)
+//        _gyroscopeReadings.add(newReading)
     }
 
     suspend fun getDeviceAddressSafe(): Short {

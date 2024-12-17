@@ -1,7 +1,6 @@
 package com.example.supabasedemo.data.network
 
 import android.util.Log
-import com.example.supabasedemo.compose.views.Reading
 import com.example.supabasedemo.data.model.Game
 import com.example.supabasedemo.data.model.UserState
 import com.example.supabasedemo.data.network.SupabaseClient.client
@@ -15,9 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 class SupabaseDbHelper(
-//    private val scope: CoroutineScope,
     val setState: (UserState) -> Unit,
-//    private val context: Context
 ) {
     fun joinGameInSupabase(
         gameUuid: String,
