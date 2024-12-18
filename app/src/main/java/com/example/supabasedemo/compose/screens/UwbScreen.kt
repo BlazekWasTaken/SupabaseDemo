@@ -32,6 +32,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.supabasedemo.compose.viewModels.MainViewModel
 import com.example.supabasedemo.compose.views.AccelerometerView
+import com.example.supabasedemo.compose.views.ArrowView
 import com.example.supabasedemo.compose.views.GyroscopeView
 import com.example.supabasedemo.compose.views.RotationView
 import com.example.supabasedemo.compose.views.UwbDataView
@@ -97,14 +98,12 @@ fun UwbScreen(
                 UwbManagerSingleton.stopSession()
             })
         }
-
         MyOutlinedTextField(
             value = address,
             onValueChange = { address = it },
             placeholder = { Text(text = "Enter Partner Address") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
         )
-
         if (!isController) {
             Spacer(modifier = Modifier.padding(8.dp))
             MyOutlinedTextField(
@@ -114,16 +113,11 @@ fun UwbScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
         }
-
         Spacer(modifier = Modifier.padding(8.dp))
-
         Text(text = "Your Device Address: $deviceAddress")
         if (isController) {
             Text(text = "Your Preamble: $devicePreamble")
         }
-
-        Spacer(modifier = Modifier.padding(8.dp))
-
         Spacer(modifier = Modifier.padding(8.dp))
         if (!isStarted) {
             MyOutlinedButton(onClick = {
@@ -144,9 +138,7 @@ fun UwbScreen(
                 Text(text = "Stop")
             }
         }
-
         Spacer(modifier = Modifier.padding(8.dp))
-
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
@@ -155,9 +147,7 @@ fun UwbScreen(
             Spacer(modifier = Modifier.padding(8.dp))
             GyroscopeView(context)
         }
-
         Spacer(modifier = Modifier.padding(8.dp))
-
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
@@ -166,6 +156,8 @@ fun UwbScreen(
             Spacer(modifier = Modifier.padding(8.dp))
             RotationView(context)
         }
+        Spacer(modifier = Modifier.padding(8.dp))
+        ArrowView()
 
         BackHandler {
             setState(UserState.InMainMenu)
