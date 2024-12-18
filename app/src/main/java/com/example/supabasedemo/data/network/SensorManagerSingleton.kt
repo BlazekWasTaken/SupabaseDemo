@@ -29,6 +29,9 @@ object SensorManagerSingleton {
     private val _magnetometerReadingsFlow = MutableStateFlow(listOf(Reading(0F, 0F, 0F)))
     val magnetometerReadingsFlow: StateFlow<List<Reading>> get() = _magnetometerReadingsFlow
 
+    private val _gravityReadingsFlow = MutableStateFlow(listOf(Reading(0F, 0F, 0F)))
+    val gravityReadingsFlow: StateFlow<List<Reading>> get() = _gravityReadingsFlow
+
     private val _compassReadingsFlow = MutableStateFlow(listOf(0F))
     val compassReadingsFlow: StateFlow<List<Float>> get() = _compassReadingsFlow
 
@@ -52,7 +55,6 @@ object SensorManagerSingleton {
         } catch (e: Exception) {
             initializationDeferred?.completeExceptionally(e)
         }
-
     }
 
     private suspend fun waitForInitialization() {
@@ -69,7 +71,6 @@ object SensorManagerSingleton {
                 val reading = Reading(event.values[0], event.values[1], event.values[2])
                 _linearAccelerometerReadingsFlow.value += reading
             }
-
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
             }
         }
@@ -79,7 +80,6 @@ object SensorManagerSingleton {
             50000
         )
     }
-
     private fun SensorManager.registerAccelerometer() {
         if (sensorManager == null) throw Exception()
         val accelerometer: Sensor? = sensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
@@ -90,7 +90,6 @@ object SensorManagerSingleton {
                 val reading = Reading(event.values[0], event.values[1], event.values[2])
                 _accelerometerReadingsFlow.value += reading
             }
-
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
             }
         }
@@ -100,7 +99,6 @@ object SensorManagerSingleton {
             50000
         )
     }
-
     private fun SensorManager.registerGyroscope() {
         if (sensorManager == null) throw Exception()
         val gyroscope: Sensor? = sensorManager!!.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
@@ -111,7 +109,6 @@ object SensorManagerSingleton {
                 val reading = Reading(event.values[0], event.values[1], event.values[2])
                 _gyroscopeReadingsFlow.value += reading
             }
-
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
             }
         }
@@ -121,7 +118,6 @@ object SensorManagerSingleton {
             50000
         )
     }
-
     private fun SensorManager.registerMagnetometer() {
         if (sensorManager == null) throw Exception()
         val magnetometer: Sensor? = sensorManager!!.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
@@ -132,7 +128,6 @@ object SensorManagerSingleton {
                 val reading = Reading(event.values[0], event.values[1], event.values[2])
                 _magnetometerReadingsFlow.value += reading
             }
-
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
             }
         }
@@ -142,23 +137,41 @@ object SensorManagerSingleton {
             50000
         )
     }
-
     private fun SensorManager.registerOrientation() {
         if (sensorManager == null) throw Exception()
-        val magnetometer: Sensor? = sensorManager!!.getDefaultSensor(Sensor.TYPE_ORIENTATION)
+        @Suppress("DEPRECATION")
+        val orientation: Sensor? = sensorManager!!.getDefaultSensor(Sensor.TYPE_ORIENTATION)
 
         val sensorEventListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
                 if (event == null) return
                 _compassReadingsFlow.value += event.values[0]
             }
-
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
             }
         }
         this.registerListener(
             sensorEventListener,
-            magnetometer,
+            orientation,
+            50000
+        )
+    }
+    private fun SensorManager.registerGravity() {
+        if (sensorManager == null) throw Exception()
+        val gravity: Sensor? = sensorManager!!.getDefaultSensor(Sensor.TYPE_GRAVITY)
+
+        val sensorEventListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                if (event == null) return
+                val reading = Reading(event.values[0], event.values[1], event.values[2])
+                _magnetometerReadingsFlow.value += reading
+            }
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+            }
+        }
+        this.registerListener(
+            sensorEventListener,
+            gravity,
             50000
         )
     }

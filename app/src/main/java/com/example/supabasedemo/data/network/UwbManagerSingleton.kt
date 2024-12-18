@@ -42,13 +42,12 @@ object UwbManagerSingleton {
     private val _preamble = MutableStateFlow("-2")
     val preamble: StateFlow<String> get() = _preamble
 
-    private val _distances = mutableListOf<Float>()
     private val _distance = MutableStateFlow(-1F)
     val distance: StateFlow<Float> get() = _distance
 
-    private val _azimuths = mutableListOf<Float>()
     private val _azimuth = MutableStateFlow(-1F)
     val azimuth: StateFlow<Float> get() = _azimuth
+
     private var _isFront: Boolean = !isController
 
     private var initializationDeferred: CompletableDeferred<Unit>? = null
@@ -145,10 +144,8 @@ object UwbManagerSingleton {
     private fun handleRangingResult(result: RangingResult) {
         when (result) {
             is RangingResultPosition -> {
-                handleDistance(result.position.distance?.value ?: -1F)
-                handleAngle(result.position.azimuth?.value ?: -1F)
-
-//                Log.d("uwb", "Distance: ${_distance.value}, Azimuth: ${_azimuth.value}")
+                _azimuth.value = result.position.azimuth?.value ?: -1F
+                _distance.value = result.position.distance?.value ?: -1F
             }
 
             is RangingResultPeerDisconnected -> {
@@ -160,84 +157,6 @@ object UwbManagerSingleton {
                 Log.e("uwb", "Unexpected result: $result")
             }
         }
-    }
-
-    private fun handleDistance(
-        distance: Float
-    ) {
-        _distances.add(distance)
-
-        if (_distances.size < 20) return
-
-        _distances.removeAt(0)
-
-        val stDev = _distances.stDev()
-        val goodDistance = _distances.between(_distances.average() - stDev, _distances.average() + stDev).average()
-
-        _distance.value = goodDistance.toFloat()
-    }
-
-    private fun handleAngle(
-        angle: Float
-    ) {
-        _azimuths.add(angle)
-
-        if (_azimuths.size < 20) return
-
-        _azimuths.removeAt(0)
-
-        val stDev = _azimuths.stDev()
-        var goodAngle = _azimuths.between(_azimuths.average() - stDev, _azimuths.average() + stDev).average()
-
-        val testAngle = if (goodAngle < 0) {
-            -goodAngle
-        } else {
-            360 - goodAngle
-        }
-
-//        val prediction = predictIsFront(
-//            _distance.value,
-//            testAngle.toFloat(),
-//            stDev,
-//            _accelerometerReadings,
-//            _gyroscopeReadings
-//        )
-
-//        if (prediction == null) return
-//        Log.d("uwb", prediction.toString())
-
-        _isFront = true
-
-        if (_isFront) {
-            goodAngle = if (goodAngle < 0) {
-                -goodAngle
-            } else {
-                360 - goodAngle
-            }
-        } else {
-            goodAngle += 180
-        }
-
-        _azimuth.value = goodAngle.toFloat()
-    }
-
-    fun predictIsFront(
-        distance: Float,
-        angle: Float,
-        stDev: Float,
-        accelerometerReadings: List<Reading>,
-        gyroscopeReadings: List<Reading>) : Boolean?
-    {
-        if (!isStarted) return null
-        if (!_isStartedFlow.value) return null
-
-        return model?.predict(
-            distance,
-            angle,
-            stDev,
-            accelerometerReadings,
-            gyroscopeReadings
-        )
     }
 
     fun stopSession() {
@@ -281,20 +200,6 @@ object UwbManagerSingleton {
 
     fun updatePreamble(newPreamble: String) {
         _preamble.value = newPreamble
-    }
-
-    fun updateAccelerometerReadings(newReading: Reading) {
-        if (!isStarted) return
-        if (!_isStartedFlow.value) return
-
-//        _accelerometerReadings.add(newReading)
-    }
-
-    fun updateGyroscopeReadings(newReading: Reading) {
-        if (!isStarted) return
-        if (!_isStartedFlow.value) return
-
-//        _gyroscopeReadings.add(newReading)
     }
 
     suspend fun getDeviceAddressSafe(): Short {
