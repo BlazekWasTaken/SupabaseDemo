@@ -27,6 +27,8 @@ sealed class UserState {
     data object InStats : UserState()
     data object InTutorial : UserState()
     data object InMiniGame : UserState()
+    data object ShowScore : UserState()
+    data object ShowFinalScores : UserState()
 
     data object InAccountInfo : UserState()
     data object InSounds : UserState()

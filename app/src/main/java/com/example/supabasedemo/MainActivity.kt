@@ -200,7 +200,16 @@ class MainActivity : ComponentActivity() {
                         },
                         setState = {
                             setState(it)
-                        })
+                        },
+                        onScoreCalculated = { score ->
+                            navController.navigate(route = Menu) {
+                                popUpTo(MiniGame) {
+                                    inclusive = true
+                                }
+                            }
+                        }
+                    )
+                    
                 }
             }
             navigation<Settings>(startDestination = SettingsMenu) {

@@ -32,6 +32,7 @@ import com.example.supabasedemo.ui.theme.MyOutlinedButton
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.WriterException
 import com.google.zxing.qrcode.QRCodeWriter
+import kotlinx.coroutines.delay
 import java.util.UUID
 
 @Composable
@@ -47,6 +48,11 @@ fun CreateGameScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     var gameSubscription by remember { mutableStateOf<Game?>(null) }
+
+    var round by remember { mutableStateOf(1) }
+    var user1Score by remember { mutableStateOf(0) }
+    var user2Score by remember { mutableStateOf(0) }
+    var currentPlayer by remember { mutableStateOf(2) }
 
     LaunchedEffect(Unit) {
         setState(UserState.InGameCreation)
@@ -71,45 +77,47 @@ fun CreateGameScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        gameSubscription?.let { game ->
-            when (game.round_no) {
-                0 -> Text("Waiting for players to join...")
-                1 -> Text("Round 1: Game Started!")
-                2 -> Text("Round 2: Continue the game!")
-                3 -> Text("Round 3: Final round!")
-            }
-        } ?: Text("No game subscription yet.")
+        if (getState().value != UserState.InMiniGame) {
+            gameSubscription?.let { game ->
+                when (game.round_no) {
+                    0 -> Text("Waiting for players to join...")
+                    1 -> Text("Round 1: Game Started!")
+                    2 -> Text("Round 2: Continue the game!")
+                    3 -> Text("Round 3: Final round!")
+                }
+            } ?: Text("No game subscription yet.")
 
-        Spacer(modifier = Modifier.padding(16.dp))
-        MyOutlinedButton(
-            onClick = {
-                val gameUuid = UUID.randomUUID().toString()
-                gameDetails = viewModel.supabaseDb.createGameInSupabase(
-                    gameUuid,
-                    onGameCreated = {
-                        qrCodeBitmap = generateQRCode(gameUuid) ?: run {
-                            errorMessage = "Error generating QR code"
-                            return@createGameInSupabase
-                        }
-                        setState(UserState.GameCreated)
-                    },
-                    onError = { errorMessage = it },
-                    currentUser = viewModel.supabaseAuth.getCurrentUser()
-                )
-            }
-        ) {
-            Text("Generate QR Code aka Create Game")
-        }
-        Spacer(modifier = Modifier.padding(16.dp))
-        MyOutlinedButton(
-            onClick = {
-                setState(UserState.CameraOpened)
-            }
-        ) {
-            Text("Join Game")
-        }
-        Spacer(modifier = Modifier.padding(16.dp))
 
+            Spacer(modifier = Modifier.padding(16.dp))
+            MyOutlinedButton(
+                onClick = {
+                    val gameUuid = UUID.randomUUID().toString()
+                    gameDetails = viewModel.supabaseDb.createGameInSupabase(
+                        gameUuid,
+                        onGameCreated = {
+                            qrCodeBitmap = generateQRCode(gameUuid) ?: run {
+                                errorMessage = "Error generating QR code"
+                                return@createGameInSupabase
+                            }
+                            setState(UserState.GameCreated)
+                        },
+                        onError = { errorMessage = it },
+                        currentUser = viewModel.supabaseAuth.getCurrentUser()
+                    )
+                }
+            ) {
+                Text("Generate QR Code aka Create Game")
+            }
+            Spacer(modifier = Modifier.padding(16.dp))
+            MyOutlinedButton(
+                onClick = {
+                    setState(UserState.CameraOpened)
+                }
+            ) {
+                Text("Join Game")
+            }
+            Spacer(modifier = Modifier.padding(16.dp))
+        }
         val userState = getState().value
         when (userState) {
             is UserState.GameCreated -> {
@@ -118,6 +126,9 @@ fun CreateGameScreen(
                     contentDescription = "QR Code",
                     modifier = Modifier.size(200.dp)
                 )
+                if (gameDetails != null && gameDetails!!.user1 != null && gameDetails!!.user2 != null) {
+                    setState(UserState.InMiniGame)
+                }
             }
 
             is UserState.CameraOpened -> {
@@ -145,6 +156,15 @@ fun CreateGameScreen(
             }
 
             is UserState.QrScanned -> {
+                var isGameReady by remember { mutableStateOf(false) }
+
+                LaunchedEffect(gameDetails) {
+                    if (gameDetails?.user1 != null && gameDetails?.user2 != null) {
+                        delay(1000) // Give time for UI to update
+                        isGameReady = true
+                        setState(UserState.InMiniGame)
+                    }
+                }
                 Text("Scanned QR Code: $scannedQRCode")
                 Spacer(modifier = Modifier.padding(16.dp))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -161,12 +181,70 @@ fun CreateGameScreen(
 
             is UserState.QrScanFailed -> {
                 Text("Error: $errorMessage", color = Color.Red)
+            }
+            is UserState.InMiniGame -> {
+                MinigameScreen(
+                    onNavigateToMainMenu = {
+
+                    },
+                    getState = getState,
+                    setState = setState,
+                    round = round,
+                    onScoreCalculated = { score ->
+                        if (currentPlayer == 2) {
+                            user2Score += score
+                            currentPlayer = 1
+                            setState(UserState.ShowScore)
+                        } else {
+                            user1Score += score
+                            currentPlayer = 2
+                            round++
+                            if (round <= 3) {
+                                setState(UserState.ShowScore)
+                            } else {
+                                setState(UserState.ShowFinalScores)
+                            }
+                        }
+                    }
+                )
+            }
+            is UserState.ShowScore -> {
+                Text("User ${if (currentPlayer == 2) "1" else "2"} scored: ${if (currentPlayer == 2) user1Score else user2Score}")
+                LaunchedEffect(Unit) {
+                    delay(3000)
+                    if (round <= 3) {
+                        setState(UserState.InMiniGame)
+                    } else {
+                        setState(UserState.ShowFinalScores)
+                    }
+                }
+            }
+            is UserState.ShowFinalScores -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Final Scores:")
+                    Text("User 1: $user1Score")
+                    Text("User 2: $user2Score")
+                }
             } else -> {
 
             }
         }
     }
+    LaunchedEffect(gameDetails?.uuid) {
+        gameDetails?.let { game ->
+            viewModel.supabaseRealtime.subscribeToGame(
+                uuid = game.uuid,
+                onGameUpdate = { updatedGame ->
+                    gameSubscription = updatedGame
+                    if (updatedGame.user1 != null && updatedGame.user2 != null) {
+                        gameDetails = updatedGame
+                    }
+                }
+            )
+        }
+    }
 }
+
 
 private fun generateQRCode(text: String): Bitmap? {
     val writer = QRCodeWriter()

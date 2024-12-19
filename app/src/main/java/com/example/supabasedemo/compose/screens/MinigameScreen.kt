@@ -71,7 +71,8 @@ fun MinigameScreen(
     onNavigateToMainMenu: () -> Unit,
     getState: () -> MutableState<UserState>,
     setState: (state: UserState) -> Unit,
-    round: Int = 0
+    round: Int = 0,
+    onScoreCalculated: (Int) -> Unit
 ) {
     LaunchedEffect(Unit) {
         setState(UserState.InMiniGame)
@@ -91,6 +92,7 @@ fun MinigameScreen(
             delay(1000)
             timeLeft--
         }
+        onScoreCalculated(score)
         setState(UserState.InMainMenu)
     }
 
