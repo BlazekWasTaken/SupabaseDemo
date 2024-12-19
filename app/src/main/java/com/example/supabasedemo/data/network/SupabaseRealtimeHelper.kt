@@ -47,6 +47,20 @@ class SupabaseRealtimeHelper(
             onGameUpdate(updatedGame)
             Log.e("Supabase-Realtime", "Game updated: $updatedGame")
 
+            if (updatedGame.user1 != null && updatedGame.user2 != null) {
+                if (UwbManagerSingleton.isController) {
+                    UwbManagerSingleton.startSession(
+                        partnerAddress = updatedGame.controlee_address ?: "-5",
+                        preamble = "0"
+                    )
+                } else {
+                    UwbManagerSingleton.startSession(
+                        partnerAddress = updatedGame.controller_address ?: "-5",
+                        preamble = updatedGame.controller_preamble ?: "-5"
+                    )
+                }
+            }
+
             when (updatedGame.round_no) {
                 1 -> {
                     NavControllerProvider.navController.navigate(route = MainMenu)
