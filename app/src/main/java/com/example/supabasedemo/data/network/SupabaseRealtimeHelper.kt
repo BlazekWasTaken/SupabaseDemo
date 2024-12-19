@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.navigation.NavController
 import com.example.supabasedemo.MainActivity
+import com.example.supabasedemo.MainActivity.Demo
 import com.example.supabasedemo.MainActivity.LoginChoice
 import com.example.supabasedemo.MainActivity.MainMenu
 import com.example.supabasedemo.MainActivity.MiniGame
@@ -63,7 +64,7 @@ class SupabaseRealtimeHelper(
 
             when (updatedGame.round_no) {
                 1 -> {
-                    NavControllerProvider.navController.navigate(route = MainMenu)
+                    NavControllerProvider.navController.navigate(route = Demo)
                 }
                 2 -> {
                     NavControllerProvider.navController.navigate(route = MiniGame)
